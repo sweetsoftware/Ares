@@ -1,4 +1,4 @@
-SERVER_URL = "http://localhost:8000"
+SERVER_URL = "http://localhost"
 BOT_ID = "test"
 DEBUG = True
 IDLE_TIME = 60

