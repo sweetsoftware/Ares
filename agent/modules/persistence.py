@@ -28,7 +28,7 @@ def clean():
                          shell=True)
     subprocess.Popen(
         "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce /f /v %s /t REG_SZ /d %s" % (SERVICE_NAME, "\"cmd.exe /c del %USERPROFILE%\\" + EXECUTABLE_NAME + "\""),
-                     shell=True)
+                          shell=True)
 
 
 def is_installed():
