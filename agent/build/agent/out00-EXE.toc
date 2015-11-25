@@ -1,0 +1,9 @@
+('C:\\Users\\Kevin_2\\Desktop\\ares\\agent\\dist\\agent.exe',
+ False,
+ False,
+ None,
+ None,
+ [],
+ None,
+ False,
+ 1448439351L)

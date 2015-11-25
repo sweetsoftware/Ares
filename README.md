@@ -1,2 +1,0 @@
-# ares
-Python botnet POC

