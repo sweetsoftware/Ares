@@ -3,3 +3,4 @@
 *.bat
 *.exe
 *.db
+*.db-journal

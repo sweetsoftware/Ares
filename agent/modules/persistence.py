@@ -52,3 +52,12 @@ def run(action):
             utils.send_output("Persistence is ON")
         else:
             utils.send_output("Persistence is OFF")
+
+
+def help():
+    help_text = """
+    Usage: persistence install|remove|status
+    Manages persistence.
+
+    """
+    return help_text

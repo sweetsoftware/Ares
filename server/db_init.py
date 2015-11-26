@@ -20,7 +20,7 @@ CREATE TABLE output(
 id integer primary key, 
 date integer,
 out text,
-bot integer,
+bot text,
 FOREIGN KEY(bot) REFERENCES bots(name))
 """)
 
@@ -30,9 +30,10 @@ id integer primary key,
 date integer,
 cmd text,
 sent integer,
-bot integer,
+bot text,
 FOREIGN KEY(bot) REFERENCES bots(name))
 """)
+
 
 conn.commit()
 conn.close()

@@ -52,3 +52,12 @@ def run(action):
         utils.send_output(keylog)
     else:
         utils.send_output("Usage: keylogger start|show")
+
+
+def help():
+    help_text = """
+    Usage: keylogger start|show
+    Starts a keylogger or shows logged keys.
+
+    """
+    return help_text

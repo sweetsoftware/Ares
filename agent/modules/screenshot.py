@@ -16,3 +16,12 @@ def run():
     image.save(filepath)
     upload.run(filepath)
     os.remove(filepath)
+
+
+def help():
+    help_text = """
+    Usage: screenshot
+    Captures screen.
+
+    """
+    return help_text

