@@ -4,6 +4,11 @@ import time
 import os
 
 
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads")
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR)
+
+
 def query_DB(sql, params=()):
     conn = sqlite3.connect('beta.db')
     cursor = conn.cursor()
@@ -86,7 +91,7 @@ class API(object):
 
     @cherrypy.expose
     def upload(self, botid, src, uploaded):
-        up_dir = os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads"), botid)
+        up_dir = os.path.join(UPLOAD_DIR, botid)
         if not os.path.exists(up_dir):
             os.makedirs(up_dir)
         while os.path.exists(os.path.join(up_dir, src)):
@@ -112,7 +117,7 @@ def main():
                 },
                 '/uploads': {
                     'tools.staticdir.on': True,
-                    'tools.staticdir.dir':  os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads")
+                    'tools.staticdir.dir':  UPLOAD_DIR
                 },
                }
     app = Main()
