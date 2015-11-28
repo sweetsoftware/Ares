@@ -99,13 +99,13 @@ class API(object):
                 break
             outfile.write(data)
         outfile.close()
-        up_url = "uploads/" +  botid + "/" + src
+        up_url = "../uploads/" +  botid + "/" + src
         return 'Uploaded: <a href="' + up_url + '">' + up_url + '</a>'
 
 
 def main():
     config = {'global': {'server.socket_host': 'localhost',
-                'server.socket_port': 80},
+                'server.socket_port': 8080},
                 '/static': {
                     'tools.staticdir.on': True,
                     'tools.staticdir.dir':  os.path.join(os.path.dirname(os.path.realpath(__file__)), "static")
