@@ -4,8 +4,8 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
 
-    <link rel="stylesheet" type="text/css" href="/static/css/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="/static/css/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="../static/css/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="../static/css/github-dark.css" media="screen">
     <title>{{botid}}</title>
   </head>
 
@@ -27,6 +27,9 @@
 		<input type="hidden" name="botid" value="{{botid}}" />
 		<button type="submit" onclick="send_command()">Send</button>
 
+        <br><br>
+        <a href="../cnc">Back</a>
+
 		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 		<script>
 		function keypressed(e){
@@ -36,12 +39,12 @@
 		    return false;
 		}
 		function send_command(e) {
-		    $.post("/api/push", {'botid': '{{botid}}', 'cmd': $('#cmd').val()});
+		    $.post("../../api/push", {'botid': '{{botid}}', 'cmd': $('#cmd').val()});
 		    $('#cmd').val('');
 		    return false;
 		}
 		function refresh_term() {
-		    $('#terminal').load("/api/stdout?botid={{botid}}");
+		    $('#terminal').load("../../api/stdout?botid={{botid}}");
             if (!$('#terminal').is(':hover')) {
                termdiv = document.getElementById('terminal');
                termdiv.scrollTop = termdiv.scrollHeight;
