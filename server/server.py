@@ -103,7 +103,7 @@ class API(object):
                 break
             outfile.write(data)
         outfile.close()
-        up_url = os.path.join(UPLOAD_URL, botid, src)
+        up_url = UPLOAD_URL +  botid + "/" + src
         return 'Uploaded: <a href="' + up_url + '">' + up_url + '</a>'
 
 
