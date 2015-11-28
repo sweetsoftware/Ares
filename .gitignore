@@ -4,3 +4,4 @@
 *.exe
 *.db
 *.db-journal
+uploads/
