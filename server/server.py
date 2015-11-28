@@ -104,7 +104,7 @@ class API(object):
 
 
 def main():
-    config = {'global': {'server.socket_host': 'localhost',
+    config = {'global': {'server.socket_host': '127.0.0.1',
                 'server.socket_port': 8080},
                 '/static': {
                     'tools.staticdir.on': True,
