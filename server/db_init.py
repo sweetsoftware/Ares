@@ -12,6 +12,8 @@ cursor.execute("""
 CREATE TABLE bots (
 name text,
 lastonline integer,
+ip text,
+os text,
 UNIQUE(name))
 """)
 

