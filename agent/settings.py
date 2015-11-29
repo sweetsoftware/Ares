@@ -1,4 +1,4 @@
-SERVER_URL = "http://chapeaugris.fr/network"
+SERVER_URL = "http://localhost:8080"
 BOT_ID = "test"
 DEBUG = True
 IDLE_TIME = 60

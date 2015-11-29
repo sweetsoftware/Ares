@@ -16,18 +16,18 @@ from modules import keylogger
 from modules import screenshot
 
 
-def print_help(mod=None):
-    help_text = """
-    Loaded modules:
+MODULES = ['runcmd', 'persistence', 'download', 'upload', 'keylogger', 'screenshot']
 
-    """
-    if mod:
+
+def print_help(mod=None):
+    help_text = "Loaded modules:\n"
+    if mod is None:
+        for module in MODULES: 
+            help_text += "- " + module + "\n"
+            help_text += sys.modules["modules." + module].help()
+    else:
         help_text += "- " + mod + "\n"
         help_text += sys.modules["modules.%s" % mod].help()
-    else:
-        for _, module, _ in pkgutil.iter_modules(['modules']):
-            help_text += "- " + module + "\n"
-            help_text += sys.modules["modules.%s" % module].help()
     help_text += """
 
     General commands:
@@ -54,7 +54,7 @@ if __name__ == "__main__":
                     print command
                 if cmdargs[0] == "cd":
                     os.chdir(os.path.expandvars(" ".join(cmdargs[1:])))
-                elif "modules.%s" % cmdargs[0] in sys.modules:
+                elif cmdargs[0] in MODULES:
                     sys.modules["modules.%s" % cmdargs[0]].run(*cmdargs[1:])
                 elif cmdargs[0] == "help":
                     if len(cmdargs) > 1:
