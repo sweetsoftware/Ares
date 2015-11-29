@@ -42,6 +42,10 @@
       return false;
   }
   function send_command(e) {
+      if(!$(".botid:checked").length){
+        alert('Please select at least one bot !');
+        return;
+      }
       $(".botid:checked").each(function(){
           $.post("../api/push", {'botid': $(this).attr('id'), 'cmd': $('#cmd').val()});
       });
