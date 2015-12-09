@@ -19,6 +19,58 @@ It currently supports:
 - screenshot
 - key logging
 
+## Installation
+
+### Server
+
+To install the server, first create the sqlite database:
+
+__cd server/__
+
+__python db_init.py__
+
+If no installed, install the __cherrypy__ python package.
+
+Then launch the server by issuing:
+__python server.py__
+
+By default, the server listens on http://localhost:8080
+
+### Agent
+
+The agent can be launched as a python script, but it is ultimately meant to be compiled as a win32 executable using [pyinstaller](https://github.com/pyinstaller/pyinstaller "pyinstaller").
+
+First, install all the dependencies:
+
+- requests
+
+- pythoncom
+
+- pyhook
+
+- PIL
+
+Then, configure agent/settings.py according to your needs:
+
+SERVER_URL = URL of the CNC http server
+
+BOT_ID = the (unique) name of the bot, leave empty to use hostname
+
+DEBUG = should debug messages be printed to stdout ?
+
+IDLE_TIME = time of inactivity before going in idle mode (the agent checks the CNC for commands far less often when idle).
+
+REQUEST_INTERVAL = interval between each query to the CNC when active
+
+Finally, use pyinstaller to compile the agent into a single exe file:
+
+__cd client/__
+
+__pyinstaller --onefile --noconsole agent.py__
+
+That's it ! You've got a fully standalone agent.
+
+
 ## Screenshots
 ### Bot list / mass execute
 ![Bot list](https://raw.githubusercontent.com/sweetsoftware/Ares/master/doc/sc_botlist.PNG "Bot list")
