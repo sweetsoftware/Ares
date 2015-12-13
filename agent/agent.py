@@ -6,6 +6,8 @@ import requests
 import sys
 import platform
 import socket
+import random
+import string
 
 import settings
 import utils
@@ -20,6 +22,8 @@ from modules import screenshot
 MODULES = ['runcmd', 'persistence', 'download', 'upload', 'keylogger', 'screenshot']
 if not settings.BOT_ID:
     settings.BOT_ID = socket.gethostname()
+if not utils.validate_botid(settings.BOT_ID):
+    settings.BOT_ID = ''.join(random.choice(string.ascii_letters) for _ in range(5))
 
 
 def print_help(mod=None):

