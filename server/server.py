@@ -82,8 +82,8 @@ class API(object):
     @cherrypy.expose
     def stdout(self, botid):
         output = ""
-        bot_output = query_DB('SELECT * FROM output WHERE bot=? ORDER BY date', (botid,))
-        for entry in bot_output:
+        bot_output = query_DB('SELECT * FROM output WHERE bot=? ORDER BY date DESC LIMIT 10', (botid,))
+        for entry in reversed(bot_output):
             output += "> %s\n\n" % entry[2]
         bot_queue = query_DB('SELECT * FROM commands WHERE bot=? and sent=? ORDER BY date', (botid, 0))
         for entry in bot_queue:
