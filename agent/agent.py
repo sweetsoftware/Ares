@@ -32,18 +32,18 @@ def print_help(mod=None):
         for module in MODULES: 
             help_text += "- " + module + "\n"
             help_text += sys.modules["modules." + module].help()
+        help_text += """
+General commands:
+
+- cd path/to/dir : changes directory
+- help : display this text
+- [any other command] : execute shell command
+
+"""
     else:
-        help_text += "- " + mod + "\n"
+        help_text = "- " + mod + "\n"
         help_text += sys.modules["modules.%s" % mod].help()
-    help_text += """
 
-    General commands:
-
-    - cd path/to/dir : changes directory
-    - help : display this text
-    - [any other command] : execute shell command
-
-    """
     utils.send_output(help_text)
 
 
@@ -67,7 +67,7 @@ if __name__ == "__main__":
                     sys.modules["modules.%s" % cmdargs[0]].run(*cmdargs[1:])
                 elif cmdargs[0] == "help":
                     if len(cmdargs) > 1:
-                        print_help(cmdargs[0])
+                        print_help(cmdargs[1])
                     else:
                         print_help()
                 else:

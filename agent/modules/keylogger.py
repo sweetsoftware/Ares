@@ -56,8 +56,8 @@ def run(action):
 
 def help():
     help_text = """
-    Usage: keylogger start|show
-    Starts a keylogger or shows logged keys.
+Usage: keylogger start|show
+Starts a keylogger or shows logged keys.
 
-    """
+"""
     return help_text

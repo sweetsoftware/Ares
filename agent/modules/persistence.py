@@ -56,8 +56,8 @@ def run(action):
 
 def help():
     help_text = """
-    Usage: persistence install|remove|status
-    Manages persistence.
+Usage: persistence install|remove|status
+Manages persistence.
 
-    """
+"""
     return help_text

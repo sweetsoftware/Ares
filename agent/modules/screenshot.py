@@ -20,8 +20,8 @@ def run():
 
 def help():
     help_text = """
-    Usage: screenshot
-    Captures screen.
+Usage: screenshot
+Captures screen.
 
-    """
+"""
     return help_text
