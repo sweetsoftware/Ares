@@ -92,7 +92,7 @@ def run(action, num_req):
 def help():
     help_text = """
     Usage: ddos [host] [requests]|stop
-    Starts UDP DDoS.
+    Start HTTP Stress Test
 
     """
     return help_text
