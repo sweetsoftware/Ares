@@ -29,7 +29,7 @@ __cd server/__
 
 __python db_init.py__
 
-If no installed, install the __cherrypy__ python package.
+If not installed, install the __cherrypy__ python package.
 
 Then launch the server by issuing:
 __python server.py__
