@@ -119,7 +119,7 @@ def run(action, num_req):
 def help():
     help_text = """
     Usage: ddos [host] [requests]|stop
-    Starts UDP DDoS.
+    HTTP DDoS
 
     """
     return help_text
