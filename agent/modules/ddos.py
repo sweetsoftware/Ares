@@ -3,6 +3,8 @@
 # Working, but not finished.
 # Build 1
 
+# Disclaimer: Not to be used maliciously. Intended for personal server stress testing.
+
 # Panel command:
 
 # ddos http://[host]/ [requests]
