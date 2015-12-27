@@ -4,7 +4,7 @@
 
 # 12/27/2015 - 4:34 PM - Bug fix: DDoS completion notice now correctly synchronized.
 
-# 12/27/2015 - 4:42 PM - Update: Functional stop now feature included.
+# 12/27/2015 - 4:42 PM - Update: Functional stop feature now included.
 
 # Panel command:
 
@@ -114,7 +114,7 @@ def run(action, num_req):
         flood(server, requests)
 
 
-    # Halt process [unimplemented]
+    # Halt process
     elif action == "stop":
         # Turn it off
         isDos = False
