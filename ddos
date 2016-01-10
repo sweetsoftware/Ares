@@ -157,11 +157,16 @@ def floodUDP():
 
         # Is it active?
         if isDos == True:
+
             # Break out when duration is up
             if time.time() > timeout:
+
                 # Announce completion
                 complete()
+
+                # Exit Loop
                 break
+
             # Otherwise, proceed with test
             else:
                 pass
@@ -272,5 +277,3 @@ def help():
     """
     return help_text
 
-
-    
