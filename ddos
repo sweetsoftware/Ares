@@ -137,16 +137,15 @@ def flood(url, number_of_requests = 1000, number_of_threads = 50):
 
 
 # Flood routine [UDP Stress Testing]
-def floodUDP():
+def floodUDP(server, secnds):
     # Globalize variables
-    global server
     global secUDP
 
     # Target Port
     vport = 80
 
     # Attack Duration (Seconds)
-    duration  = secUDP
+    duration  = secnds
 
     # Comparison Value for Completion
     timeout =  time.time() + duration
@@ -245,7 +244,7 @@ def run(action, dtype, num_req):
         secUDP = int(num_req) # Specified number of seconds
 
         # Call function to begin UDP Attack
-        floodUDP()   
+        floodUDP(server, secUDP)   
 
     # Halt Active Sessions
     elif action == "stop" and dtype =="ALL":
