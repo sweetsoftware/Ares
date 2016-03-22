@@ -1,6 +1,5 @@
 *.pyc
 *.spec
-*.bat
 *.exe
 *.db
 *.db-journal

