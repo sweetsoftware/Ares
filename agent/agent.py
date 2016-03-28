@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import time
 import os
 import requests
@@ -48,6 +46,8 @@ General commands:
 
 if __name__ == "__main__":
     time.sleep(settings.PAUSE_AT_START)
+    if settings.AUTO_PERSIST:
+        persistence.install()
     last_active = time.time()
     is_idle = False
     while 1:
