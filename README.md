@@ -62,9 +62,13 @@ IDLE_TIME = time of inactivity before going in idle mode (the agent checks the C
 
 REQUEST_INTERVAL = interval between each query to the CNC when active
 
+PAUSE_AT_START = delay before contacting the server when launched (in seconds)
+
+AUTO_PERSIST = should the agent be persistent by default
+
 Finally, use pyinstaller to compile the agent into a single exe file:
 
-__cd client/__
+__cd agent/python__
 
 __pyinstaller --onefile --noconsole agent.py__
 
