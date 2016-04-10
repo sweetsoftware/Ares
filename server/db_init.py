@@ -36,6 +36,12 @@ bot text,
 FOREIGN KEY(bot) REFERENCES bots(name))
 """)
 
+cursor.execute("""
+CREATE TABLE users (
+id integer primary key,
+name text,
+password text)
+""")
 
 conn.commit()
 conn.close()
