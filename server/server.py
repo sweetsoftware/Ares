@@ -71,19 +71,20 @@ def set_admin_password(admin_password):
 
 
 def require_admin(func):
-        def wrapper(*args, **kwargs):
-            global session_cookie
-            global last_session_activity
-            global SESSION_TIMEOUT
-            if session_cookie and COOKIE_NAME in cherrypy.request.cookie and session_cookie == cherrypy.request.cookie[COOKIE_NAME].value:
-                if time.time() - last_session_activity > SESSION_TIMEOUT:
-                    return app.disconnect()
-                else:
-                    last_session_activity = time.time()
-                    return func(*args, **kwargs)
+    def wrapper(*args, **kwargs):
+        global session_cookie
+        global last_session_activity
+        global SESSION_TIMEOUT
+        if session_cookie and COOKIE_NAME in cherrypy.request.cookie and session_cookie == cherrypy.request.cookie[COOKIE_NAME].value:
+            print time.time() - last_session_activity
+            if time.time() - last_session_activity > SESSION_TIMEOUT:
+                raise cherrypy.HTTPRedirect("/disconnect")
             else:
-                raise cherrypy.HTTPRedirect("/login")
-        return wrapper
+                last_session_activity = time.time()
+                return func(*args, **kwargs)
+        else:
+            raise cherrypy.HTTPRedirect("/login")
+    return wrapper
 
 
 class Main(object):
@@ -114,7 +115,7 @@ class Main(object):
                 cherrypy.response.cookie[COOKIE_NAME] = session_cookie
                 global last_session_activity
                 last_session_activity = time.time()
-                raise cherrypy.HTTPRedirect("/")
+                raise cherrypy.HTTPRedirect('/')
             else:
                 with open("Login.html", "r") as f:
                     html = f.read()

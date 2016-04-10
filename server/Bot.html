@@ -14,16 +14,14 @@
       <div class="container">
         <h1>{{botid}}</h1>
         <a href="../cnc">&lt;&lt; Back</a>
-        <h2 style="text-align: right"><a href="../disconnect">Disconnect</a></h2>
+        <h2 style="text-align: right"><a href="../passchange">Change Password</a>  <a href="../disconnect">Disconnect</a></h2>
       </div>
     </header>
 
     <div class="container"> 
 	<section id="main_content">
 		
-		<pre id="terminal" style="width:80%;">
-            
-        </pre>
+		<pre id="terminal" style="width:80%;"></pre>
 		
 		<input type="text" name="cmd" id="cmd" onkeypress="keypressed(event)" style="width: 50%" />
 		<button type="submit" onclick="send_command()">Send</button>
@@ -51,7 +49,7 @@
             }
             
 		}
-		setInterval(refresh_term, 2000)
+		setInterval(refresh_term, 4000)
 		$(document).ready(function(){
 		    refresh_term();
 		});
