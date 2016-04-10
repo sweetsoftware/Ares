@@ -14,17 +14,18 @@
       <div class="container">
         <h1>{{botid}}</h1>
         <a href="../cnc">&lt;&lt; Back</a>
+        <h2 style="text-align: right"><a href="../disconnect">Disconnect</a></h2>
       </div>
     </header>
 
     <div class="container"> 
 	<section id="main_content">
 		
-		<pre id="terminal">
+		<pre id="terminal" style="width:80%;">
             
         </pre>
 		
-		<input type="text" name="cmd" id="cmd" onkeypress="keypressed(event)" style="width: 80%" />
+		<input type="text" name="cmd" id="cmd" onkeypress="keypressed(event)" style="width: 50%" />
 		<button type="submit" onclick="send_command()">Send</button>
 
         <br><br>

