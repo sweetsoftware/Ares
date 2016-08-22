@@ -148,8 +148,7 @@ class CNC(object):
         bot_list = query_DB("SELECT * FROM bots ORDER BY lastonline DESC")
         output = ""
         for bot in bot_list:
-            output += '<tr><td><a href="bot?botid=%s">%s</a></td><td>%s</td><td>%s</td><td>%s</td><td><input type="checkbox" id="%s" class="botid" /></td></tr>' % (bot[0], bot[0], "Online" if time.time() - 30 < bot[1] else time.ctime(bot[1]), bot[2], bot[3],
-                bot[0])
+            output += '<tr><td><a href="bot?botid=%s">%s</a></td><td>%s</td><td>%s</td><td>%s</td><td><input type="checkbox" id="%s" name="botcheckbox" class="botid" /></td><td><button type="button" onClick="deleteBot(\'%s\')">Delete</button></td></tr>' % (bot[0], bot[0], "Online" if time.time() - 30 < bot[1] else time.ctime(bot[1]), bot[2], bot[3], bot[0], bot[0])
         with open("List.html", "r") as f:
             html = f.read()
             html = html.replace("{{bot_table}}", output)

