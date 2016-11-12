@@ -43,11 +43,10 @@
 		}
 		function refresh_term() {
 		    $('#terminal').load("../api/stdout?botid={{botid}}");
-            if (!$('#terminal').is(':hover')) {
-               termdiv = document.getElementById('terminal');
-               termdiv.scrollTop = termdiv.scrollHeight;
-            }
-            
+		    if (!$('#terminal').is(':hover')) {
+		       termdiv = document.getElementById('terminal');
+		       termdiv.scrollTop = termdiv.scrollHeight;
+		    }            
 		}
 		setInterval(refresh_term, 5000)
 		$(document).ready(function(){
