@@ -3,7 +3,6 @@ import sys
 import subprocess
 import shutil
 import requests
-import os
 
 import utils
 
