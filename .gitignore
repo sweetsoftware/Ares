@@ -1,3 +1,5 @@
 venv
 *.pyc
 uploads
+*.db
+
