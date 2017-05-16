@@ -1,0 +1,6 @@
+appdirs==1.4.3
+packaging==16.8
+pkg-resources==0.0.0
+pyparsing==2.2.0
+requests==2.14.2
+six==1.10.0

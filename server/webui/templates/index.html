@@ -1,0 +1,17 @@
+{% with title="Ares" %}
+{% include "header.html" %}
+{% endwith %}
+
+<div class="container">
+	<section id="main_content">
+
+    <p>Welcome to Ares.</p>
+    <ul>
+    <li><a href="{{ url_for('webui.agent_list') }}">Agent list</a></li>
+    <li><a href="#">Build agent</a></li>
+    </ul>
+
+  </section>
+</div>
+
+{% include "footer.html" %}

