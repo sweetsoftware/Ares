@@ -157,3 +157,8 @@ def mass_execute():
 @webui.route('/uploads/<path:path>')
 def uploads(path):
     return send_from_directory('uploads', path)
+
+
+@webui.route('/build')
+def agent_builder():
+    return render_template('agent_builder.html')

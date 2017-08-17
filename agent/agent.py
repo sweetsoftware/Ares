@@ -59,10 +59,6 @@ class Agent(object):
         # Set UID if server sent one (anonymous agent)
         if 'set_UID' in json_resp:
             self.config.set('UID', json_resp['set_UID'])
-            storage = self.get_local_storage()
-            if storage:
-                settings_file = os.path.join(storage, 'settings.ini')
-                self.config.save(settings_file)
             self.log('UID set to ' + self.config.get('UID'))
         return json_resp
 
