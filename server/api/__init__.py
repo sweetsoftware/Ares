@@ -143,10 +143,3 @@ def _build_agent(agent_id, platform, server_url, hello_interval, idle_time):
         os.chdir(cwd)
         return agent_file
     return ''
-
-
-@api.route('/build', methods=['POST'])
-@require_admin
-def build_agent():
-    agent = _build_agent(request.form['agent_id'], request.form['agent_platform'], request.form['agent_server'], 10, 20)
-    return send_file(agent, as_attachment=True)

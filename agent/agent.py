@@ -40,15 +40,6 @@ class Agent(object):
         else:
             return None
 
-    def get_platform():
-        """ Get the platform the agent is deployed on """
-        if os.name == 'nt':
-            return 'WINDOWS'
-        elif os.name == 'posix':
-            return 'LINUX'
-        else:
-            return 'UNKNOWN'
-
     def server_hello(self):
         """ Ask server for instructions """
         # Get next command(s)
