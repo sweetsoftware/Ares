@@ -1,7 +1,4 @@
-BUILTIN_CONFIG = """
-[General]
-UID = xxxxanonymous
-SERVER = http://localhost:5000
+SERVER = "http://localhost:5000"
 HELLO_INTERVAL = 2
-IDLE_TIME = 20
-"""
+IDLE_TIME = 60
+MAX_FAILED_CONNECTIONS = 10

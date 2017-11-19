@@ -13,6 +13,7 @@ from flask import session
 from flask import url_for
 from flask import flash
 from flask import send_from_directory
+from flask import current_app
 
 from models import db
 from models import Agent
@@ -116,14 +117,9 @@ def agent_list():
 @require_admin
 def agent_detail(agent_id):
     agent = Agent.query.get(agent_id)
+    if not agent:
+        abort(404)
     return render_template('agent_detail.html', agent=agent)
-
-
-@webui.route('/agents/<agent_id>/stdout')
-@require_admin
-def agent_console(agent_id):
-    agent = Agent.query.get(agent_id)
-    return render_template('agent_console.html', agent=agent)
 
 
 @webui.route('/agents/rename', methods=['POST'])
@@ -138,27 +134,6 @@ def rename_agent():
     return ''
 
 
-@webui.route('/agents/massexec', methods=['POST'])
-@require_admin
-def mass_execute():
-    selection = request.form.getlist('selection')
-    if 'execute' in request.form:
-        for agent_id in selection:
-            Agent.query.get(agent_id).push_command(request.form['cmd'])
-        flash('Executed "%s" on %s agents' % (request.form['cmd'], len(selection)))
-    elif 'delete' in request.form:
-        for agent_id in selection:
-            db.session.delete(Agent.query.get(agent_id))
-        db.session.commit()
-        flash('Deleted %s agents' % len(selection))
-    return redirect(url_for('webui.agent_list'))
-
-
 @webui.route('/uploads/<path:path>')
 def uploads(path):
-    return send_from_directory('uploads', path)
-
-
-@webui.route('/build')
-def agent_builder():
-    return render_template('agent_builder.html')
+    return send_from_directory(current_app.config['UPLOAD_FOLDER'], path)

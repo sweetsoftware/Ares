@@ -5,7 +5,7 @@
 <div class="container">
   <section id="main_content">
 
-      <form method="post" action="{{ url_for('webui.mass_execute') }}">
+      <form method="post" action="{{ url_for('api.mass_execute') }}">
       <input type="text" name="cmd" id="cmd" style="width:50%" />
       <input type="submit" name="execute" value="Run on selection" />
       <input type="submit" name="delete" value="Delete selection" onclick="return confirm('Remove selected agents from list ?')"/>

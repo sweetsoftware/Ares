@@ -1,16 +1,8 @@
-<pre id="termtext" style="width:80%;">
-{% for cmd in agent.commands %}
-{% if cmd.executed %}
-{{ cmd.timestamp.strftime('%Y-%m-%d %H:%M') }}
-{{ cmd.cwd }} $ {{ cmd.cmdline }}
-{{ cmd.output }}
-{{ cmd.server_output | safe }}
-{% else %}
-{{ cmd.timestamp.strftime('%Y-%m-%d %H:%M') }}
-$ {{ cmd.cmdline }}
-pending...
+<pre id="termtext" style="width:80%">
+{% if agent.output %}
+{{ agent.output | safe }}
 {% endif %}
+{% for cmd in agent.commands %}
+Pending: {{ cmd.cmdline }}
 {% endfor %}
 </pre>
-
-<span style="color: #b5e853;font-weight: bold">{{ agent.cwd }} $ </span>

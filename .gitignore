@@ -1,5 +1,6 @@
 venv
 *.pyc
-uploads
+server/uploads
 *.db
-
+server/agents
+TODO

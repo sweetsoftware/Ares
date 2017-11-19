@@ -27,7 +27,7 @@
     function refresh_term() {
         var termdiv = $('#termtext');
         if (!$('#terminal').is(':hover')) {
-            $('#terminal').load("{{ url_for('webui.agent_console', agent_id=agent.id) }}", '' , 
+            $('#terminal').load("{{ url_for('api.agent_console', agent_id=agent.id) }}", '' , 
             function() {
                 var termdiv = document.getElementById('termtext');
                 termdiv.scrollTop = termdiv.scrollHeight;
