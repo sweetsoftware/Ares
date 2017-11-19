@@ -1,0 +1,17 @@
+altgraph==0.14
+click==6.7
+dis3==0.1.1
+Flask==0.12.2
+Flask-Script==2.0.6
+Flask-SQLAlchemy==2.3.2
+future==0.16.0
+gunicorn==19.7.1
+itsdangerous==0.24
+Jinja2==2.10
+macholib==1.8
+MarkupSafe==1.0
+pefile==2017.11.5
+pygeoip==0.3.2
+PyInstaller==3.3
+SQLAlchemy==1.1.15
+Werkzeug==0.12.2

