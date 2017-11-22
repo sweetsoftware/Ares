@@ -6,5 +6,6 @@ wget -q https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py
 wine msiexec /q /i /tmp/python-2.7.msi
 wine C:/Python27/python.exe /tmp/get-pip.py
 wine C:/Python27/Scripts/pip.exe install -r agent_requirements.txt
+wine C:/Python27/Scripts/pip.exe install pyinstaller
 rm /tmp/python-2.7.msi
 rm /tmp/get-pip.py

@@ -48,8 +48,14 @@ def buildagent(prog_name, server_url, platform, hello_interval=1, idle_time=60, 
         shutil.rmtree(working_dir)
     shutil.copytree('../agent', working_dir)
     with open(os.path.join(working_dir, "config.py"), 'w') as agent_config:
-        agent_config.write("""SERVER = "%s"\nHELLO_INTERVAL = %s\nIDLE_TIME = %s\nMAX_FAILED_CONNECTIONS = %s\nPERSIST = %s\n""" %
-          (server_url.rstrip('/'), hello_interval, idle_time, max_failed_connections, persist))
+        with open("../agent/template_config.py") as f:
+            config_file = f.read()
+        config_file = config_file.replace("__SERVER__", server_url.rstrip('/'))
+        config_file = config_file.replace("__HELLO_INTERVAL__", str(hello_interval))
+        config_file = config_file.replace("__IDLE_TIME__", str(idle_time))
+        config_file = config_file.replace("__MAX_FAILED_CONNECTIONS__", str(max_failed_connections))
+        config_file = config_file.replace("__PERSIST__", str(persist))
+        agent_config.write(config_file)
     cwd = os.getcwd()
     os.chdir(working_dir)
     shutil.move('agent.py', prog_name + '.py')

