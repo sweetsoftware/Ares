@@ -13,7 +13,7 @@ The Web interface can be run on any server running Python. The agent can be comp
 
 ## Server
 
-## Setup
+### Setup
 
 Install the Python requirements for the server:
 
@@ -28,9 +28,14 @@ Initialize the database:
 ./ares.py initdb
 ```
 
-## Usage
+### Usage
 
-Run the server:
+Run with the builtin (debug) server:
+
+```
+./ares.py runserver -h 0.0.0.0 -p 8080 --threaded
+```
+Or run using gunicorn:
 
 ```
 gunicorn ares:app -b 0.0.0.0:8080 --threads 20
@@ -72,9 +77,10 @@ To build a new agent to a standalone binary, use the following command:
 ``` 
 
 Where:
-    - program_name is the resulting executable name
-    - server_url should be set to the CnC server's URL
-    - the platform is either Windows or Linux.
+
+- program_name is the resulting executable name
+- server_url should be set to the CnC server's URL
+- the platform is either Windows or Linux.
 
 e.g.
 
@@ -91,7 +97,7 @@ The **buildagent** command supports the following optional arguments:
 -p add this flag to make the agent persistent by default
 ```
 
-Build agents are stored in server/agents/.
+Built agents are stored in server/agents/.
 
 ### Supported agent commands
 
