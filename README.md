@@ -93,7 +93,7 @@ The **buildagent** command supports the following optional arguments:
 ```
 -h <delay> time delay (in seconds) between each contact with the CnC (to pull new commands)
 -m <max_failed_attempts> maximum number of failed connections (over that limit, the agent self-destructs)
--i <idel_time> time (in seconds) after which the agent goes to sleep if no new command is received (when the agent sleeps, it tries to pull commands less often)
+-i <idle_time> time (in seconds) after which the agent goes to sleep if no new command is received (when the agent sleeps, it tries to pull commands less often)
 -p add this flag to make the agent persistent by default
 ```
 
