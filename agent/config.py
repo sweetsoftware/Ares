@@ -26,7 +26,7 @@ persist
 Installs the agent.
 
 clean
-Uninstall the agent.
+Uninstalls the agent.
 
 exit
 Kills the agent.

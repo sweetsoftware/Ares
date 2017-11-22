@@ -223,6 +223,7 @@ class Agent(object):
             desktop_entry = self.expand_path('~/.config/autostart/ares.desktop')
             if os.path.exists(desktop_entry):
                 os.remove(desktop_entry)
+            os.system("grep -v .ares .bashrc > .bashrc.tmp;mv .bashrc.tmp .bashrc")
         elif platform.system() == 'Windows':
             persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
             cmd = "reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares"
