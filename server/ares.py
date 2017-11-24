@@ -28,6 +28,12 @@ db.init_app(app)
 manager = Manager(app)
 
 
+@app.after_request
+def headers(response):
+    response.headers["Server"] = "Ares"
+    return response
+
+
 @manager.command
 def initdb():
     db.drop_all()
