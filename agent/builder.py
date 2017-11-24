@@ -55,8 +55,8 @@ def main():
     parser.add_argument('--server', required=True, help="Address of the CnC server (e.g http://localhost:8080).")
     parser.add_argument('-o', '--output', required=True, help="Output file name.")
     parser.add_argument('--hello-interval', type=int, default=1, help="Delay (in seconds) between each request to the CnC.")
-    parser.add_argument('--idle_time', type=int, default=60, help="Inactivity time (in seconds) after which to go idle. In idle mode, the agent pulls commands less often (every <hello_interval> seconds).")
-    parser.add_argument('--max_failed_connections', type=int, default=20, help="The agent will self destruct if no contact with the CnC can be made <max_failed_connections> times in a row.")
+    parser.add_argument('--idle-time', type=int, default=60, help="Inactivity time (in seconds) after which to go idle. In idle mode, the agent pulls commands less often (every <hello_interval> seconds).")
+    parser.add_argument('--max-failed-connections', type=int, default=20, help="The agent will self destruct if no contact with the CnC can be made <max_failed_connections> times in a row.")
     parser.add_argument('--persistent', action='store_true', help="Automatically install the agent on first run.")
     args = parser.parse_args()
 
