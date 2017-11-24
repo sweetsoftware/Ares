@@ -11,30 +11,35 @@ Ares is made of two main programs:
 
 The Web interface can be run on any server running Python. The agent can be compiled to native executables using **pyinstaller**.
 
-## Server
+## Setup
 
-### Setup
-
-Install the Python requirements for the server:
+Install the Python requirements:
 
 ```
-cd server
-pip install -r server_requirements.txt
+pip install -r requirements.txt
 ```
 
 Initialize the database:
 
 ```
+cd server
 ./ares.py initdb
 ```
 
-### Usage
+In order to compile Windows agents on Linux, setup wine (optional):
+
+```
+./wine_setup.sh
+```
+
+## Server
 
 Run with the builtin (debug) server:
 
 ```
 ./ares.py runserver -h 0.0.0.0 -p 8080 --threaded
 ```
+
 Or run using gunicorn:
 
 ```
@@ -45,59 +50,50 @@ The server should now be accessible on http://localhost:8080
 
 ## Agent
 
-### Setup
-
-Install the Python requirements for the agent:
+Run the Python agent (update config.py to suit your needs):
 
 ```
 cd agent
-pip install -r agent_requirements.txt
-```
-
-In order to compile Windows agents on Linux, setup wine (optional):
-
-```
-./wine_setup.sh
-```
-
-### Run
-
-Run the Python agent:
-
-```
 ./agent.py
 ```
 
-By default, the agent tries to reach a CnC on http://localhost:8080
-
-To build a new agent to a standalone binary, use the following command:
+Build a new agent to a standalone binary:
 
 ```
-./ares.py buildagent <program_name> <server_url> <platform>
+./builder.py -p Linux --server http://localhost:8080 -o agent
+./agent
 ``` 
 
-Where:
-
-- program_name is the resulting executable name
-- server_url should be set to the CnC server's URL
-- the platform is either Windows or Linux.
-
-e.g.
+To see a list of supported options, run ./builder.py -h
 
 ```
-./ares.py buildagent testagent http://localhost:8080 Linux
-```
+./agent/builder.py -h
+usage: builder.py [-h] -p PLATFORM --server SERVER -o OUTPUT
+                  [--hello-interval HELLO_INTERVAL] [--idle_time IDLE_TIME]
+                  [--max_failed_connections MAX_FAILED_CONNECTIONS]
+                  [--persistent]
 
-The **buildagent** command supports the following optional arguments:
+Builds an Ares agent.
 
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PLATFORM, --platform PLATFORM
+                        Target platform (Windows, Linux).
+  --server SERVER       Address of the CnC server (e.g http://localhost:8080).
+  -o OUTPUT, --output OUTPUT
+                        Output file name.
+  --hello-interval HELLO_INTERVAL
+                        Delay (in seconds) between each request to the CnC.
+  --idle_time IDLE_TIME
+                        Inactivity time (in seconds) after which to go idle.
+                        In idle mode, the agent pulls commands less often
+                        (every <hello_interval> seconds).
+  --max_failed_connections MAX_FAILED_CONNECTIONS
+                        The agent will self destruct if no contact with the
+                        CnC can be made <max_failed_connections> times in a
+                        row.
+  --persistent          Automatically install the agent on first run.
 ```
--h <delay> time delay (in seconds) between each contact with the CnC (to pull new commands)
--m <max_failed_attempts> maximum number of failed connections (over that limit, the agent self-destructs)
--i <idle_time> time (in seconds) after which the agent goes to sleep if no new command is received (when the agent sleeps, it tries to pull commands less often)
--p add this flag to make the agent persistent by default
-```
-
-Built agents are stored in server/agents/.
 
 ### Supported agent commands
 
