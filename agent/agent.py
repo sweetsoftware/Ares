@@ -240,18 +240,25 @@ class Agent(object):
     @threaded
     def zip(self, zip_name, to_zip):
         """ Zips a folder or file """
-        zip_name = self.expand_path(zip_name)
-        to_zip = self.expand_path(to_zip)
-        if not os.path.exists(to_zip):
-            self.send_output("[+] No such file or directory: %s" % to_zip)
-            return
-        self.send_output("[*] Creating zip archive...")
-        zip_file = zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED)
-        for root, dirs, files in os.walk(to_zip):
-            for file in files:
-                zip_file.write(os.path.join(root, file))
-        zip_file.close()
-        self.send_output("[+] Archive created: %s" % zip_name)
+        try:
+            zip_name = self.expand_path(zip_name)
+            to_zip = self.expand_path(to_zip)
+            if not os.path.exists(to_zip):
+                self.send_output("[+] No such file or directory: %s" % to_zip)
+                return
+            self.send_output("[*] Creating zip archive...")
+            zip_file = zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED)
+            if os.path.isdir(to_zip):
+                relative_path = os.path.dirname(to_zip)
+                for root, dirs, files in os.walk(to_zip):
+                    for file in files:
+                        zip_file.write(os.path.join(root, file), os.path.join(root, file).replace(relative_path, '', 1))
+            else:
+                zip_file.write(to_zip, os.path.basename(to_zip))
+            zip_file.close()
+            self.send_output("[+] Archive created: %s" % zip_name)
+        except Exception as exc:
+            self.send_output(traceback.format_exc())
    
     @threaded
     def screenshot(self):
