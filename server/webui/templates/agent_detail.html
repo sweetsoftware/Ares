@@ -14,9 +14,8 @@
 		</div>
 	</div>
     
-	<div>
-    <input type="text" name="cmd" id="cmd" style="width: auto" />
-    <button id="send-btn" type="submit">Send</button>
+	<div >
+		<input type="text" name="cmd" id="cmd" style="width: 80%" placeholder="Type command here and press Enter..."/>
 	</div>
 	
     <script>
@@ -113,7 +112,7 @@
 				if(currentMd5Hash != currentHtmlHash){
 					currentMd5Hash = currentHtmlHash; // keep the hash in global scope to compare it at the next iteration
 					oldScrollPosition = $('#termtext').scrollTop();
-					scrollToBottom = (typeof oldScrollPosition == "undefined" || oldScrollPosition + 503 == $('#termtext').prop('scrollHeight'))? true: false;
+					scrollToBottom = (typeof oldScrollPosition == "undefined" || (oldScrollPosition + $('#termtext').innerHeight() >= $('#termtext')[0].scrollHeight)) ? true: false;
 					$('#terminal').html(data);
 					newScrollPosition = (scrollToBottom == true)? $('#termtext').prop('scrollHeight') : oldScrollPosition;
 					$('#termtext').scrollTop(newScrollPosition);
@@ -142,7 +141,7 @@
 		 */
 		 function terminalScrollAction(){
 			$('#termtext').on('scroll', function() {
-			   if($('#termtext').scrollTop() + 503 == $('#termtext').prop('scrollHeight') ) {
+			   if($('#termtext').scrollTop() + $('#termtext').innerHeight() >= $('#termtext')[0].scrollHeight) {
 					$('#msg-term-update').hide();
 			   }
 			});
