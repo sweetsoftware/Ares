@@ -244,3 +244,15 @@ a {
 .cf {
   zoom:1;
 }
+
+#msg-term-update {
+	cursor:pointer;
+	margin:auto;
+	display:none;
+	width:250px;
+	color:white;
+	background:#58b220;
+	padding:3px;
+	text-align:center;
+	border-radius:5px;
+}
