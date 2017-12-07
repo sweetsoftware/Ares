@@ -2,7 +2,6 @@ altgraph==0.14
 certifi==2017.11.5
 chardet==3.0.4
 click==6.7
-dis3==0.1.1
 EasyProcess==0.2.3
 Flask==0.12.2
 Flask-Script==2.0.6
