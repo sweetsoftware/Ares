@@ -104,7 +104,7 @@ class Agent(object):
             return
         if newlines:
             output += "\n\n"
-        req = requests.post(config.SERVER + '/api/' + self.uid + '/report',
+        req = requests.post(config.SERVER + '/api/' + self.uid + '/report', 
         data={'output': output})
 
     def expand_path(self, path):
