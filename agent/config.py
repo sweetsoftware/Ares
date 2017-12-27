@@ -3,6 +3,7 @@ HELLO_INTERVAL = 2
 IDLE_TIME = 60
 MAX_FAILED_CONNECTIONS = 10
 PERSIST = True
+TLS_VERIFY = True
 HELP = """
 <any shell command>
 Executes the command in a shell and return its output.
