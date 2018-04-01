@@ -1,8 +1,8 @@
-SERVER = "http://localhost:8080"
-HELLO_INTERVAL = 2
+SERVER = "http://localhost:5000"
+HELLO_INTERVAL = 1
 IDLE_TIME = 60
-MAX_FAILED_CONNECTIONS = 10
-PERSIST = True
+MAX_FAILED_CONNECTIONS = 100
+PERSIST = False
 TLS_VERIFY = True
 HELP = """
 <any shell command>

