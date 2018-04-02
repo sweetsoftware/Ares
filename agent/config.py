@@ -29,6 +29,9 @@ Installs the agent.
 clean
 Uninstalls the agent.
 
+execshellcode <shellcode>
+Executes shellcode in a new thread.
+
 exit
 Kills the agent.
 """

