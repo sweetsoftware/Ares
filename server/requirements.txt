@@ -5,7 +5,6 @@ Flask-SQLAlchemy==2.3.2
 itsdangerous==0.24
 Jinja2==2.10
 MarkupSafe==1.0
-pkg-resources==0.0.0
 pygeoip==0.3.2
 SQLAlchemy==1.2.6
 Werkzeug==0.14.1
