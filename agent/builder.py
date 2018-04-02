@@ -28,6 +28,8 @@ def build_agent(output, server_url, hello_interval, idle_time, max_failed_connec
     os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
     agent_file = os.path.join(working_dir, 'dist', prog_name)
     os.chdir(cwd)
+    if os.name == "nt" and not agent_file.endswith(".exe"):
+        agent_file += ".exe"
     os.rename(agent_file, output)
     shutil.rmtree(working_dir)
     print("[+] Agent built successfully: %s" % output)
