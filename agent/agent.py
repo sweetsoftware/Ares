@@ -121,6 +121,8 @@ class Agent(object):
             output = (out + err)
             if os.name == "nt":
                 output = output.decode('cp850')
+            else:
+                output = output.decode('utf-8', errors='replace')
             self.send_output(output)
         except Exception as exc:
             self.send_output(traceback.format_exc())
