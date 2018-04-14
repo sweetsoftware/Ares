@@ -20,6 +20,7 @@ from flask import escape
 import cgi
 
 from webui import require_admin
+from webui import require_user
 from models import db
 from models import Agent
 from models import Command
@@ -38,7 +39,7 @@ def geolocation(ip):
 
 
 @api.route('/massexec', methods=['POST'])
-@require_admin
+@require_user
 def mass_execute():
     selection = request.form.getlist('selection')
     if 'execute' in request.form:
@@ -54,7 +55,7 @@ def mass_execute():
 
 
 @api.route('/<agent_id>/push', methods=['POST'])
-@require_admin
+@require_user
 def push_command(agent_id):
     agent = Agent.query.get(agent_id)
     if not agent:
@@ -64,7 +65,7 @@ def push_command(agent_id):
 
 
 @api.route('/<agent_id>/stdout')
-@require_admin
+@require_user
 def agent_console(agent_id):
     agent = Agent.query.get(agent_id)
     return render_template('agent_console.html', agent=agent)

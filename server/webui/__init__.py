@@ -31,7 +31,17 @@ def hash_and_salt(password):
 def require_admin(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if 'username' in session and session['username'] == 'admin':
+        if 'username' in session and User.query.filter_by(username=session['username']).first().is_admin:
+            return func(*args, **kwargs)
+        else:
+            flash("user is not an admin")
+            return redirect(url_for('webui.login'))
+    return wrapper
+
+def require_user(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if 'username' in session:
             return func(*args, **kwargs)
         else:
             return redirect(url_for('webui.login'))
@@ -42,7 +52,7 @@ webui = Blueprint('webui', __name__, static_folder='static', static_url_path='/s
 
 
 @webui.route('/')
-@require_admin
+@require_user
 def index():
     return render_template('index.html')
 
@@ -84,7 +94,7 @@ def login():
 
 
 @webui.route('/passchange', methods=['GET', 'POST'])
-@require_admin
+@require_user
 def change_password():
     if request.method == 'POST':
         if 'password' in request.form:
@@ -107,14 +117,14 @@ def logout():
 
 
 @webui.route('/agents')
-@require_admin
+@require_user
 def agent_list():
     agents = Agent.query.order_by(Agent.last_online.desc())
     return render_template('agent_list.html', agents=agents)
 
 
 @webui.route('/agents/<agent_id>')
-@require_admin
+@require_user
 def agent_detail(agent_id):
     agent = Agent.query.get(agent_id)
     if not agent:
@@ -123,6 +133,7 @@ def agent_detail(agent_id):
 
 
 @webui.route('/agents/rename', methods=['POST'])
+@require_user
 def rename_agent():
     if 'newname' in request.form and 'id' in request.form:
         agent = Agent.query.get(request.form['id'])
