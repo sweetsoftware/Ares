@@ -31,7 +31,17 @@ def hash_and_salt(password):
 def require_admin(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if 'username' in session and session['username'] == 'admin':
+        if 'username' in session and User.query.filter_by(username=session['username']).first().is_admin:
+            return func(*args, **kwargs)
+        else:
+            flash("user is not an admin")
+            return redirect(url_for('webui.login'))
+    return wrapper
+
+def require_user(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if 'username' in session:
             return func(*args, **kwargs)
         else:
             return redirect(url_for('webui.login'))
@@ -42,53 +52,81 @@ webui = Blueprint('webui', __name__, static_folder='static', static_url_path='/s
 
 
 @webui.route('/')
-@require_admin
+@require_user
 def index():
     return render_template('index.html')
 
 
 @webui.route('/login', methods=['GET', 'POST'])
 def login():
-    admin_user = User.query.filter_by(username='admin').first()
-    if not admin_user:
+    if not User.query.filter_by(is_admin=True).first():
+        #Comes Here if there is no admin user in the table
         if request.method == 'POST':
             if 'password' in request.form:
-                password_hash, salt = hash_and_salt(request.form['password']) 
-                new_user = User()
-                new_user.username = 'admin'
-                new_user.password = password_hash
-                new_user.salt = salt
-                db.session.add(new_user)
-                db.session.commit()
-                flash('Password set successfully. Please log in.')
-                return redirect(url_for('webui.login'))
-        return render_template('create_password.html')
-    if request.method == 'POST':
-        if request.form['password']:
-                password_hash = hashlib.sha256()
-                password_hash.update(admin_user.salt + request.form['password'])
-                if admin_user.password == password_hash.hexdigest():
-                    session['username'] = 'admin'
-                    last_login_time =  admin_user.last_login_time
-                    last_login_ip = admin_user.last_login_ip
-                    admin_user.last_login_time = datetime.now()
-                    admin_user.last_login_ip = request.remote_addr
+                password_hash, salt = hash_and_salt(request.form['password'])
+                if not User.query.filter_by(username=request.form['username']).first():
+                    new_user = User()
+                    new_user.username = request.form['username']
+                    new_user.password = password_hash
+                    new_user.salt = salt
+                    new_user.is_admin = True
+                    db.session.add(new_user)
                     db.session.commit()
-                    flash('Logged in successfully.') 
-                    if last_login_ip:
-                        flash('Last login from ' + last_login_ip + ' on ' + last_login_time.strftime("%d/%m/%y %H:%M"))
-                    return redirect(url_for('webui.index'))
+                    flash('User set successfully. Please log in.')
                 else:
-                    flash('Wrong passphrase')
+                    flash('User Already Present')
+                return redirect(url_for('webui.login'))
+        return render_template('create_user.html',show_checkbox=False)
+    #when there is an admin in the table
+    if request.method == 'POST':
+        user = User.query.filter_by(username=request.form['username']).first()
+        if user != None:
+            if request.form['password'] and request.form['username']:
+                    password_hash = hashlib.sha256()
+                    password_hash.update(user.salt + request.form['password'])
+                    if user.password == password_hash.hexdigest():
+                        session['username'] = request.form['username']
+                        last_login_time =  user.last_login_time
+                        last_login_ip = user.last_login_ip
+                        user.last_login_time = datetime.now()
+                        user.last_login_ip = request.remote_addr
+                        db.session.commit()
+                        flash('Logged in successfully.') 
+                        if last_login_ip:
+                            flash('Last login from ' + last_login_ip + ' on ' + last_login_time.strftime("%d/%m/%y %H:%M"))
+                        return redirect(url_for('webui.index'))
+                    else:
+                        flash('Wrong passphrase')
     return render_template('login.html')
+
+@webui.route('/adduser',methods=['GET','POST'])
+@require_admin
+def add_user():
+    if request.method == 'POST':
+        user = User.query.filter_by(username=request.form['username']).first()
+        if 'password' in request.form and not user:
+            password_hash, salt = hash_and_salt(request.form['password'])
+            new_user = User()
+            new_user.username = request.form['username']
+            new_user.password = password_hash
+            new_user.salt = salt
+            new_user.is_admin = 'is_admin' in request.form
+            db.session.add(new_user)
+            db.session.commit()
+            flash('User set successfully. Please log in.')
+            return redirect(url_for('webui.index'))
+        else:
+            flash("Username already present")
+    return render_template('create_user.html',show_checkbox=True)
+
 
 
 @webui.route('/passchange', methods=['GET', 'POST'])
-@require_admin
+@require_user
 def change_password():
     if request.method == 'POST':
         if 'password' in request.form:
-            admin_user = User.query.filter_by(username='admin').first()
+            admin_user = User.query.filter_by(username=session['username']).first()
             password_hash, salt = hash_and_salt(request.form['password'])
             admin_user.password = password_hash
             admin_user.salt = salt
@@ -107,14 +145,14 @@ def logout():
 
 
 @webui.route('/agents')
-@require_admin
+@require_user
 def agent_list():
     agents = Agent.query.order_by(Agent.last_online.desc())
     return render_template('agent_list.html', agents=agents)
 
 
 @webui.route('/agents/<agent_id>')
-@require_admin
+@require_user
 def agent_detail(agent_id):
     agent = Agent.query.get(agent_id)
     if not agent:
@@ -123,6 +161,7 @@ def agent_detail(agent_id):
 
 
 @webui.route('/agents/rename', methods=['POST'])
+@require_user
 def rename_agent():
     if 'newname' in request.form and 'id' in request.form:
         agent = Agent.query.get(request.form['id'])
