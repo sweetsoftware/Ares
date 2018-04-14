@@ -33,7 +33,13 @@
     {% endif %}
     {% if session.username %}
     <h3 style="text-align: right">Logged in as {{ session.username }}</h3>
-    <h2 style="text-align: right"><a href="{{ url_for('webui.change_password') }}">Change Password</a>  <a href="{{ url_for('webui.logout') }}">Disconnect</a></h2>
+    <h2 style="text-align: right">
+      <a href="{{ url_for('webui.change_password') }}">Change Password</a>
+      {% if session.is_admin %}
+        <a href="{{ url_for('webui.add_user') }}">Add User</a> 
+      {% endif %}
+      <a href="{{ url_for('webui.logout') }}">Disconnect</a>
+    </h2>
     {% endif %}
    </div>
 </header>

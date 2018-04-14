@@ -31,7 +31,7 @@ def hash_and_salt(password):
 def require_admin(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if 'username' in session and User.query.filter_by(username=session['username']).first().is_admin:
+        if 'username' in session and session['is_admin']:
             return func(*args, **kwargs)
         else:
             flash("user is not an admin")
@@ -86,6 +86,7 @@ def login():
                     password_hash.update(user.salt + request.form['password'])
                     if user.password == password_hash.hexdigest():
                         session['username'] = request.form['username']
+                        session['is_admin'] = user.is_admin
                         last_login_time =  user.last_login_time
                         last_login_ip = user.last_login_ip
                         user.last_login_time = datetime.now()
@@ -140,6 +141,7 @@ def change_password():
 @webui.route('/logout')
 def logout():
     session.pop('username', None)
+    session.pop('is_admin', None)
     flash('Logged out successfully.')
     return redirect(url_for('webui.login'))
 
