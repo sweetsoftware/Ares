@@ -10,7 +10,7 @@ def build_agent(output, server_url, hello_interval, idle_time, max_failed_connec
     working_dir = os.path.join(tempfile.gettempdir(), 'ares')
     if os.path.exists(working_dir):
         shutil.rmtree(working_dir)
-    agent_dir = os.path.dirname(__file__)
+    agent_dir = os.getcwd()
     shutil.copytree(agent_dir, working_dir)
     with open(os.path.join(working_dir, "config.py"), 'w') as agent_config:
         with open(os.path.join(agent_dir, "template_config.py")) as f:
