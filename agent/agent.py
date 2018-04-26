@@ -303,7 +303,7 @@ class Agent(object):
                             if not args:
                                 self.send_output('usage: cd </path/to/directory>')
                             else:
-                                self.cd(args[0])
+                                self.cd(' '.join(args[0:]))
                         elif command == 'upload':
                             if not args:
                                 self.send_output('usage: upload <localfile>')
