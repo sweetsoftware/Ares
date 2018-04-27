@@ -22,6 +22,9 @@ Takes a screenshot.
 python <command|file>
 Runs a Python command or local file.
 
+flood <ip> <port> <duration in seconds>
+"Simple udp flooder"
+
 persist
 Installs the agent.
 
