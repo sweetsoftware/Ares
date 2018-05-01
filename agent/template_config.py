@@ -20,9 +20,6 @@ Creates a zip archive of the folder.
 screenshot
 Takes a screenshot.
 
-python <command|file>
-Runs a Python command or local file.
-
 persist
 Installs the agent.
 

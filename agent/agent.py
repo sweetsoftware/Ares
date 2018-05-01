@@ -127,33 +127,6 @@ class Agent(object):
         except Exception as exc:
             self.send_output(traceback.format_exc())
 
-    @threaded
-    def python(self, command_or_file):
-        """ Runs a python command or a python file and returns the output """
-        new_stdout = io.StringIO()
-        old_stdout = sys.stdout
-        sys.stdout = new_stdout
-        new_stderr = io.StringIO()
-        old_stderr = sys.stderr
-        sys.stderr = new_stderr
-        if os.path.exists(command_or_file):
-            self.send_output("[*] Running python file...")
-            with open(command_or_file, 'r') as f:
-                python_code = f.read()
-                try:
-                    exec(python_code)
-                except Exception as exc:
-                    self.send_output(traceback.format_exc())
-        else:
-            self.send_output("[*] Running python command...")
-            try:
-                exec(command_or_file)
-            except Exception as exc:
-                self.send_output(traceback.format_exc())
-        sys.stdout = old_stdout
-        sys.stderr = old_stderr
-        self.send_output(new_stdout.getvalue() + new_stderr.getvalue())
-
     def cd(self, directory):
         """ Change current directory """
         os.chdir(self.expand_path(directory))
@@ -334,7 +307,7 @@ class Agent(object):
                             if not args:
                                 self.send_output('usage: cd </path/to/directory>')
                             else:
-                                self.cd(args[0])
+                                self.cd(" ".join(args))
                         elif command == 'upload':
                             if not args:
                                 self.send_output('usage: upload <localfile>')
