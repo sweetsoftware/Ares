@@ -11,27 +11,25 @@ Ares is made of two main programs:
 
 The Web interface can be run on any server running Python3. The agent can be compiled to native executables using **pyinstaller**.
 
-## Setup
+## Server
 
-Install the Python requirements:
+Install the Python requirements for the server:
 
 ```
-pip install -r requirements.txt
+cd server
+pip3 install -r requirements.txt
 ```
 
 Initialize the database:
 
 ```
-cd server
-python ares.py initdb
+python3 ares.py initdb
 ```
-
-## Server
 
 Run with the builtin (debug) server:
 
 ```
-python ares.py runserver -h 0.0.0.0 -p 8080 --threaded
+python3 ares.py runserver -h 0.0.0.0 -p 8080 --threaded
 ```
 
 Or run using gunicorn:
@@ -49,12 +47,23 @@ The server should now be accessible on http(s)://localhost:8080
 
 ## Agent
 
+Install the Python requirements for the agent:
+
+```
+cd agent
+pip3 install -r requirements.txt
+```
+
 Run the Python agent (update config.py to suit your needs):
 
 ```
 cd agent
 python agent.py
 ```
+
+### Building an agent
+
+Windows agents are build on Windows and Linux agents are built on Linux.
 
 Build a new agent to a standalone binary:
 
@@ -63,7 +72,7 @@ Build a new agent to a standalone binary:
 python builder.py --server http://localhost:8080 -o agent.exe
 
 # Linux
-python builder.py --server http://localhost:8080 -o agent
+python3 builder.py --server http://localhost:8080 -o agent
 ``` 
 
 ### Supported agent commands
