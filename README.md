@@ -110,6 +110,9 @@ Downloads a file through HTTP(S).
 zip <archive_name> <folder>
 Creates a zip archive of the folder.
 
+unzip <archive_name> <destination>
+Unzips a file in the current directory
+
 screenshot
 Takes a screenshot.
 

