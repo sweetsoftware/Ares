@@ -260,18 +260,17 @@ class Agent(object):
             self.send_output("[+] Archive created: %s" % zip_name)
         except Exception as exc:
             self.send_output(traceback.format_exc())
-
-    def extract_zip(self,zip_name):
-        self.extract_zip(self,zip_name,os.path.dirname(zip_name))
-   
+            
     @threaded
-    def extract_zip(self,zip_name,destination):
+    def extract_zip(self,zip_name,destination=""):
         """ Unzips a zip file in the current directory """
         try:
             zip_name = self.expand_path(zip_name)
             if not os.path.exists(zip_name):
                 self.send_output("[+] No such zip file: %s"% zip_name)
                 return
+            if destination="":
+                destination = os.path.dirname(zip_name)
             self.send_output("[*] Starting zip extraction...")
             zip_file = zipfile.ZipFile(zip_name)
             zip_file.extractall(destination)
