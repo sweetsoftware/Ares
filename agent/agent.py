@@ -167,7 +167,7 @@ class Agent(object):
 
     @threaded
     def download(self, file, destination=''):
-        """ Downloads a file the the agent host through HTTP(S) """
+        """ Downloads a file to the agent host through HTTP(S) """
         try:
             destination = self.expand_path(destination)
             if not destination:
