@@ -130,7 +130,7 @@ def upload(agent_id):
             file_path = os.path.join(store_dir, filename)
         file.save(file_path)
         download_link = url_for('webui.uploads', path=agent_dir + '/' + filename)
-        agent.output += '[*] File uploaded: <a target="_blank" href="' + download_link + '">' + download_link + '</a>\n'
+        agent.output += '[*] File uploaded: <a target="_blank" href="' + download_link + '"><img class="screenshot" src="' + download_link + '"></img></a>\n'
         db.session.add(agent)
         db.session.commit()
     return ''

