@@ -11,7 +11,7 @@
 			<script> // Creating in JS an Array of file names for controlating if have to append new screenshot or something
 				FILES[{{file}}] = "{{ filelist[file].split(agent.id + '/')[1] }}"
 			</script>
-			<a href="/uploads/{{filelist[file].split('/uploads/')[1]}}" target="_blank"><img src="/uploads/{{filelist[file].split('/uploads/')[1]}}" alt="Screenshot" class="screenshot"></a>
+			<a href="/uploads/{{filelist[file].split('/uploads/')[1]}}" target="_blank"><img src="/uploads/{{filelist[file].split('/uploads/')[1]}}" alt="Screenshot" class="screenshot screenshot-seen"></a>
 		{% endfor %}
 	</pre> 
 	<script>
@@ -42,11 +42,11 @@
 		</div>
 	</div>
 	<div id="functions" style="width:80%;">
-		<button type="button" class="btn btn-light" id="screenshot">Screenshot</button>
-		<button type="button" class="btn btn-light" id="persist">Persist</button>
+		<button type="button" class="btn btn-primary" id="screenshot">Screenshot</button>
+		<button type="button" class="btn btn-primary" id="persist">Persist</button>
 		<button type="button" class="btn btn-primary" id="help">Help</button>
-		<button type="button" class="btn btn-secondary" id="exit">Exit</button>
 		<button type="button" class="btn btn-danger" id="clean">Clean</button>
+		<button type="button" class="btn btn-danger" id="exit">Exit</button>
 		<hr>
 	</div>
 
@@ -171,7 +171,10 @@
 		  * Refresh the screenshots if the console output changed.
 		  */
 		function refreshScreenshots() {
-			terminal = $('#termtext')[0].innerHTML.split('\n');
+			if($('#termtext')[0])
+				terminal = $('#termtext')[0].innerHTML.split('\n');
+			else
+				terminal = '';
 			for(line in terminal){
 				if(terminal[line].includes('File uploaded')){
 					url = terminal[line].split('href="')[1].split('"')[0]

