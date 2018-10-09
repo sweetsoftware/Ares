@@ -1,4 +1,4 @@
-<pre id="termtext" style="width:80%">
+<pre id="termtext" class="col-md-9">
 {% if agent.output %}
 {{ agent.output | safe }}
 {% endif %}
@@ -6,3 +6,71 @@
 Pending: {{ cmd.cmdline }}
 {% endfor %}
 </pre>
+<pre id="newTools" class="col-md-2 col-md-offset-1">
+    <div id="dropfile" class="col-md-12">
+		<div id="dropContainer" style="border:1px solid black;height:100px;">
+		   <p>Drop & Send</p>
+			<form id="sendfile" action="" method=post enctype=multipart/form-data>
+				<input type=file name=file id="filetosend">
+			</form>
+		</div>
+		
+    </div>
+    <div class="col-md-6">
+
+    </div>
+</pre>
+<script>
+    (function(){
+
+		// dragover and dragenter events need to have 'preventDefault' called
+		// in order for the 'drop' event to register. 
+		// See: https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Drag_operations#droptargets
+
+		dropContainer = document.getElementById('dropfile');
+		fileInput = document.getElementById('filetosend')
+
+		dropContainer.ondragover = dropContainer.ondragenter = function(evt) {
+			evt.preventDefault();
+		};
+		
+		dropContainer.ondrop = function(evt) {
+			// pretty simple -- but not for IE :(
+			fileInput.files = evt.dataTransfer.files;
+			evt.preventDefault();
+		};
+
+		$('#filetosend').change( function(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			$('#sendfile').submit();
+		});
+
+		$("form#sendfile").submit(function(e) {
+			e.preventDefault();    
+			var formData = new FormData(this);
+		
+			$.ajax({
+				url: "{{ url_for('webui.upload_file', agent_id=agent.id) }}",
+				type: 'POST',
+				data: formData,
+				success: function (url_image) {
+					url_splitted = window.location.href.split('/');
+					url_http_s = url_splitted[0];
+					url_base = url_splitted[2];
+					uploadFile(url_http_s + '//' + url_base + '/' + url_image);
+				},
+				cache: false,
+				contentType: false,
+				processData: false
+			});
+		});
+		
+		function uploadFile(file) {
+			$.post("{{ url_for('api.push_command', agent_id=agent.id) }}",
+					{'cmdline': "download " + file}, function(){});
+			return false;
+		}
+		
+    })();
+</script>
