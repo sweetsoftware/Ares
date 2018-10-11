@@ -4,27 +4,31 @@
 
 <div class="container">
   <section id="main_content">
-
       <form method="post" action="{{ url_for('api.mass_execute') }}">
-      <input type="text" name="cmd" id="cmd" style="width:50%" />
-      <input type="submit" name="execute" value="Run on selection" />
-      <input type="submit" name="delete" value="Delete selection" onclick="return confirm('Remove selected agents from list ?')"/>
-
-      <table>
-      <tr><th>Name</th><th>Last Online</th><th>User</th><th>Host</th><th>IP</th><th>OS</th><th>Geolocation</th><th>Change name</th><th>Sel.</th></tr>
-      {% for agent in agents %}
-      <tr>
-        <td><a href="{{ url_for('webui.agent_detail', agent_id=agent.id) }}" style="text-decoration: none">{{agent.display_name}}</a>  </td>
-        <td>{% if agent.last_online %}{% if agent.is_online() %}ONLINE{%else%}{{agent.last_online.strftime('%Y/%m/%d %H:%M')}}{%endif%}{% endif %}</td>
-        <td>{{agent.username}}</td>
-        <td>{{agent.hostname}}</td>
-        <td>{{agent.remote_ip}}</td>
-        <td>{{agent.operating_system}}</td>
-        <td>{{agent.geolocation}}</td>
-        <td><a href="#" onclick="changeName('{{agent.id}}', '{{agent.display_name}}')" style="text-decoration: none">Change name</a></td>
-        <td><input type="checkbox" id="checkbox_{{agent.id}}" name="selection" value="{{agent.id}}" /></td>
-      {% endfor %}
-      </table>
+			<div class="form-horizontal">				
+				<div class="col-sm-6"><input type="text" name="cmd" id="cmd" class="form-control" /></div>
+				<div class="col-sm-3"><input type="submit" class="btn btn-lg btn-primary btn-block" name="execute" value="Run on selection" /></div>
+				<div class="col-sm-3"><input type="submit" class="btn btn-lg btn-primary btn-block" name="delete" value="Delete selection" onclick="return confirm('Remove selected agents from list ?')"/></div>		
+			</div>
+		  <table class="table table-striped">
+			<thead>
+				<tr><th>Name</th><th>Last Online</th><th>User</th><th>Host</th><th>IP</th><th>OS</th><th>Geolocation</th><th>Change name</th><th>Sel.</th></tr>
+			</thead>
+			<tbody>
+			  {% for agent in agents %}
+			  <tr>
+				<td><a href="{{ url_for('webui.agent_detail', agent_id=agent.id) }}" style="text-decoration: none">{{agent.display_name}}</a>  </td>
+				<td>{% if agent.last_online %}{% if agent.is_online() %}ONLINE{%else%}{{agent.last_online.strftime('%Y/%m/%d %H:%M')}}{%endif%}{% endif %}</td>
+				<td>{{agent.username}}</td>
+				<td>{{agent.hostname}}</td>
+				<td>{{agent.remote_ip}}</td>
+				<td>{{agent.operating_system}}</td>
+				<td>{{agent.geolocation}}</td>
+				<td><a href="#" onclick="changeName('{{agent.id}}', '{{agent.display_name}}')" style="text-decoration: none">Change name</a></td>
+				<td><input type="checkbox" id="checkbox_{{agent.id}}" name="selection" value="{{agent.id}}" /></td>
+			  {% endfor %}
+			</tbody>
+		  </table>
       </form>
   </section>
 </div>
