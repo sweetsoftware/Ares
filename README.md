@@ -37,16 +37,16 @@ In order to compile Windows agents on Linux, setup wine (optional):
 Run with the builtin (debug) server:
 
 ```
-./ares.py runserver -h 0.0.0.0 -p 8080 --threaded
+./ares.py runserver --threaded
 ```
 
 Or run using gunicorn:
 
 ```
-gunicorn ares:app -b 0.0.0.0:8080 --threads 20
+gunicorn ares:app --threads 20
 ```
 
-The server should now be accessible on http://localhost:8080
+The server should now be accessible on https://localhost
 
 ## Agent
 
@@ -60,7 +60,7 @@ cd agent
 Build a new agent to a standalone binary:
 
 ```
-./builder.py -p Linux --server http://localhost:8080 -o agent
+./builder.py -p Linux --server https://localhost -o agent
 ./agent
 ``` 
 
