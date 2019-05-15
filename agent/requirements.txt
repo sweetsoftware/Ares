@@ -1,9 +1,4 @@
-certifi==2018.1.18
-chardet==3.0.4
-EasyProcess==0.2.3
-idna==2.6
-Pillow==5.0.0
-pyscreenshot==0.4.2
-requests==2.18.4
-urllib3==1.22
+Pillow
+pyscreenshot
+requests
 pyinstaller

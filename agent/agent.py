@@ -351,13 +351,12 @@ class Agent(object):
                         self.log("Switching to idle mode...")
                         self.idle = True
                     else:
-                        time.sleep(0.5)
+                        time.sleep(1)
             except Exception as exc:
-                self.log(traceback.format_exc())
                 failed_connections = self.get_consecutive_failed_connections()
                 failed_connections += 1
                 self.update_consecutive_failed_connections(failed_connections)
-                self.log("Consecutive failed connections: %d" % failed_connections)
+                self.log("Failed to contact %s [%s/%s]" % (config.SERVER, failed_connections, config.MAX_FAILED_CONNECTIONS))
                 if failed_connections > config.MAX_FAILED_CONNECTIONS:
                     self.silent = True
                     self.clean()

