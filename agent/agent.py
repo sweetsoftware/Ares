@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 # coding: utf-8
 
 import requests
@@ -36,7 +36,7 @@ def threaded(func):
 class Agent(object):
 
     def __init__(self):
-        self.idle = True
+        self.idle = False
         self.silent = False
         self.platform = platform.system() + " " + platform.release()
         self.last_active = time.time()

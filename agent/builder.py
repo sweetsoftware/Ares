@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import os
 import shutil
@@ -29,9 +29,14 @@ def build_agent(output, server_url, hello_interval, idle_time, max_failed_connec
     if platform == "linux":
         os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
     elif platform == "windows":
-        os.system('pyinstaller.exe --noconsole --onefile ' + prog_name + '.py')
+        if os.name == "nt":
+            os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
+        else:
+            os.system('wine pyinstaller --noconsole --onefile ' + prog_name + '.py')
         if not agent_file.endswith(".exe"):
             agent_file += ".exe"
+        if not output.endswith(".exe"):
+            output += ".exe"
     os.chdir(cwd)
     os.rename(agent_file, output)
     shutil.rmtree(working_dir)
