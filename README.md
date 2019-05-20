@@ -9,7 +9,7 @@ Ares is made of two main programs:
 - A Command aNd Control server, which is a Web interface to administer the agents
 - An agent program, which is run on the compromised host, and ensures communication with the CNC
 
-The Web interface can be run on any server running Python3. The agent can be compiled to native executables using **pyinstaller**.
+The Web interface can be run on any server running Python3. The agent uses Python2 and can be compiled to native executables using **pyinstaller**.
 
 ## Server
 
@@ -54,26 +54,23 @@ cd agent
 pip3 install -r requirements.txt
 ```
 
-Run the Python agent (update config.py to suit your needs):
+For compiling Windows executables on Linux, wine is needed:
 
 ```
-cd agent
-python agent.py
+./wine_setup.sh
 ```
 
 ### Building an agent
-
-Windows agents are build on Windows and Linux agents are built on Linux.
 
 Build a new agent to a standalone binary:
 
 ```
 # Windows
-python builder.py --server http://localhost:8080 -o agent.exe
+./builder.py --server http://localhost:8080 -o agent.exe -p windows
 
 # Linux
-python3 builder.py --server http://localhost:8080 -o agent
-``` 
+./builder.py --server http://localhost:8080 -o agent -p linux
+```
 
 ### Supported agent commands
 

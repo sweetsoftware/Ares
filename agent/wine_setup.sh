@@ -2,7 +2,7 @@
 
 sudo apt-get update && sudo apt-get -yq install wine
 
-winecfg
+DISPLAY= winecfg
 
 if uname -a|grep -q "x86_64"
 then
