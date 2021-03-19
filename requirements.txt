@@ -10,7 +10,7 @@ future==0.16.0
 gunicorn==19.7.1
 idna==2.6
 itsdangerous==0.24
-Jinja2==2.10
+Jinja2==2.11.3
 macholib==1.8
 MarkupSafe==1.0
 olefile==0.44
