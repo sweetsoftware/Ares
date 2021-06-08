@@ -15,7 +15,7 @@ macholib==1.8
 MarkupSafe==1.0
 olefile==0.44
 pefile==2017.11.5
-Pillow==4.3.0
+Pillow==8.2.0
 pygeoip==0.3.2
 PyInstaller==3.3
 pyscreenshot==0.4.2
