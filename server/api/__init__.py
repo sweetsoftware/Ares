@@ -17,7 +17,7 @@ import pygeoip
 from flask import flash
 from flask import redirect
 from flask import escape
-import cgi
+import html
 
 from webui import require_admin
 from models import db
@@ -106,7 +106,7 @@ def report_command(agent_id):
     if not agent:
         abort(404)
     out = request.form['output']
-    agent.output += cgi.escape(out)
+    agent.output += html.escape(out)
     db.session.add(agent)
     db.session.commit()
     return ''
