@@ -1,7 +1,7 @@
-Flask
-Flask-Script
-Flask-SQLAlchemy
-itsdangerous
-Jinja2
-pygeoip
-SQLAlchemy
+Flask==2.2.2
+Flask-Script==2.0.5
+Flask-SQLAlchemy==3.0.3
+itsdangerous==2.1.2
+Jinja2==3.1.2
+pygeoip==0.3.2
+SQLAlchemy==2.0.1
